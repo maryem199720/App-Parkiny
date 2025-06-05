@@ -1,5 +1,5 @@
 <div class="sidebar flex flex-col w-64 bg-gradient-to-b from-primary-purple to-dark-purple text-white fixed h-[100vh] z-20 transition-all duration-300 ease-in-out"
-     [ngClass]="{'w-16': isCollapsed, '-translate-x-full': !(isSidebarOpen$ | async) && isMobile, 'translate-x-0': (isSidebarOpen$ | async) || !isMobile}"
+     [ngClass]="{'w-12': isCollapsed, '-translate-x-full': !(isSidebarOpen$ | async) && isMobile, 'translate-x-0': (isSidebarOpen$ | async) || !isMobile}"
      *ngIf="isLoggedIn$ | async">
   <div class="flex items-center justify-between h-14 px-3 border-b border-dark-purple/50">
     <div class="flex items-center space-x-2">
@@ -29,12 +29,6 @@
           <i class="ri-calendar-check-fill mr-2 text-gold-500 text-base"></i>
           <span [ngClass]="{'hidden': isCollapsed}">Réservations</span>
         </a>
-        <a routerLink="/dashboard/subscriptions" routerLinkActive="bg-dark-purple text-white" 
-           class="flex items-center px-2 py-1 text-sm font-medium rounded-md text-white/80 hover:bg-dark-purple hover:text-white transition-colors"
-           [ngClass]="{'justify-center': isCollapsed}">
-          <i class="ri-bill-fill mr-2 text-gold-500 text-base"></i>
-          <span [ngClass]="{'hidden': isCollapsed}">Abonnements</span>
-        </a>
         <div>
           <button (click)="toggleProfileMenu()" 
                   class="flex items-center w-full px-2 py-1 text-sm font-medium rounded-md text-white/80 hover:bg-dark-purple hover:text-white transition-colors"
@@ -45,39 +39,28 @@
           </button>
           <div *ngIf="isProfileMenuOpen && !isCollapsed" class="space-y-1 pl-4">
             <a routerLink="/dashboard/profile/info" routerLinkActive="bg-dark-purple text-white" 
-               class="block px-2 py-1 text-xs font-medium rounded-md text-white/80 hover:bg-dark-purple hover:text-white transition-colors">
-              Informations
-            </a>
-            <a routerLink="/dashboard/profile/password" routerLinkActive="bg-dark-purple text-white" 
-               class="block px-2 py-1 text-xs font-medium rounded-md text-white/80 hover:bg-dark-purple hover:text-white transition-colors">
-              Mot de Passe
+               class="flex items-center px-2 py-1 text-xs font-medium rounded-md text-white/80 hover:bg-dark-purple hover:text-white transition-colors">
+              <i class="ri-information-fill mr-2 text-gold-500 text-xs"></i>
+              Mes informations
             </a>
             <a routerLink="/dashboard/profile/vehicles" routerLinkActive="bg-dark-purple text-white" 
-               class="block px-2 py-1 text-xs font-medium rounded-md text-white/80 hover:bg-dark-purple hover:text-white transition-colors">
+               class="flex items-center px-2 py-1 text-xs font-medium rounded-md text-white/80 hover:bg-dark-purple hover:text-white transition-colors">
+              <i class="ri-car-fill mr-2 text-gold-500 text-xs"></i>
               Véhicules
             </a>
             <a routerLink="/dashboard/profile/subscription" routerLinkActive="bg-dark-purple text-white" 
-               class="block px-2 py-1 text-xs font-medium rounded-md text-white/80 hover:bg-dark-purple hover:text-white transition-colors">
-              Abonnement
+               class="flex items-center px-2 py-1 text-xs font-medium rounded-md text-white/80 hover:bg-dark-purple hover:text-white transition-colors">
+              <i class="ri-bill-fill mr-2 text-gold-500 text-xs"></i>
+              Historique de l'abonnement
             </a>
             <a routerLink="/dashboard/profile/history" routerLinkActive="bg-dark-purple text-white" 
-               class="block px-2 py-1 text-xs font-medium rounded-md text-white/80 hover:bg-dark-purple hover:text-white transition-colors">
+               class="flex items-center px-2 py-1 text-xs font-medium rounded-md text-white/80 hover:bg-dark-purple hover:text-white transition-colors">
+              <i class="ri-history-fill mr-2 text-gold-500 text-xs"></i>
               Historique des Réservations
             </a>
           </div>
         </div>
-        <a routerLink="/dashboard/settings" routerLinkActive="bg-dark-purple text-white" 
-           class="flex items-center px-2 py-1 text-sm font-medium rounded-md text-white/80 hover:bg-dark-purple hover:text-white transition-colors"
-           [ngClass]="{'justify-center': isCollapsed}">
-          <i class="ri-settings-3-fill mr-2 text-gold-500 text-base"></i>
-          <span [ngClass]="{'hidden': isCollapsed}">Paramètres</span>
-        </a>
-        <a routerLink="/dashboard/spot-status" routerLinkActive="bg-dark-purple text-white" 
-           class="flex items-center px-2 py-1 text-sm font-medium rounded-md text-white/80 hover:bg-dark-purple hover:text-white transition-colors"
-           [ngClass]="{'justify-center': isCollapsed}">
-          <i class="ri-road-map-fill mr-2 text-gold-500 text-base"></i>
-          <span [ngClass]="{'hidden': isCollapsed}">Statut des places</span>
-        </a>
+       
         <a (click)="logout()" 
            class="flex items-center px-2 py-1 text-sm font-medium rounded-md text-white/80 hover:bg-dark-purple hover:text-white transition-colors cursor-pointer"
            [ngClass]="{'justify-center': isCollapsed}">
@@ -88,15 +71,15 @@
     </nav>
   </div>
   <div class="p-2 border-t border-dark-purple/50">
-    <div class="flex items-center">
-      <div class="w-8 h-8 rounded-full bg-dark-purple text-gold-500 flex items-center justify-center text-sm font-medium gold-glow">
-        {{ userInitials || 'UN' }}
+    <a routerLink="/dashboard/subscriptions" 
+       class="flex items-center space-x-2 text-white hover:text-gold-500 transition-colors"
+       [ngClass]="{'justify-center space-x-0': isCollapsed}">
+      <i class="ri-star-fill text-gold-500 text-base"></i>
+      <div [ngClass]="{'hidden': isCollapsed}">
+        <p class="text-sm font-medium">Mettre à niveau le plan</p>
+        <p class="text-xs text-white/80">Accès à plus de modèles de qualité</p>
       </div>
-      <div class="ml-2" [ngClass]="{'hidden': isCollapsed}">
-        <p class="text-sm font-medium text-white">{{ userName || 'Utilisateur' }}</p>
-        <p class="text-xs font-medium text-white/80">{{ subscriptionType || 'Membre' }}</p>
-      </div>
-    </div>
+    </a>
   </div>
 </div>
 

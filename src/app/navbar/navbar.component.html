@@ -1,4 +1,5 @@
-<nav class="navbar">
+<!-- src/app/navbar/navbar.component.html -->
+<nav class="navbar" (click)="closeProfileDropdown()">
   <div class="container mx-auto px-6 py-4 flex items-center justify-between">
     <!-- Logo -->
     <a routerLink="/home" (click)="onHomeClick()" class="text-2xl font-pacifico logo-text flex items-center">
@@ -14,18 +15,46 @@
         <a routerLink="/about" routerLinkActive="active" class="nav-link">À propos</a>
         <a routerLink="/contact" routerLinkActive="active" class="nav-link">Contact</a>
         <a routerLink="/how-it-works" routerLinkActive="active" class="nav-link">Comment ça marche</a>
-        <a routerLink="/faq" routerLinkActive="active" class="nav-link">FAQ</a>
+        <!-- Always show Reservations and Abonnements links -->
+        @if (isLoggedIn$ | async; as isLoggedIn) {
+          <a routerLink="/reservations" class="nav-link">Réservations</a>
+          <a routerLink="/subscription" class="nav-link">Abonnements</a>
+        } @else {
+          <a (click)="handleRestrictedLink()" class="nav-link disabled-link">Réservations</a>
+          <a (click)="handleRestrictedLink()" class="nav-link disabled-link">Abonnements</a>
+        }
       </div>
     </div>
 
-    <!-- Auth Buttons -->
+    <!-- Auth and User Section -->
     <div class="flex items-center space-x-4">
-      <a routerLink="/auth" class="bg-primary-purple text-white px-6 py-2 rounded-md font-medium hover:bg-dark-purple transition-colors gold-glow auth-button">
-        Connexion
-      </a>
-      <a routerLink="/auth" [queryParams]="{signup: true}" class="bg-gold-500 text-gray-900 px-6 py-2 rounded-md font-medium hover:bg-gold-600 transition-colors gold-glow auth-button">
-        S'inscrire
-      </a>
+      @if (isLoggedIn$ | async; as isLoggedIn) {
+        <!-- User Avatar with Dropdown -->
+        <div class="relative">
+          <div (click)="toggleProfileDropdown($event)" class="w-10 h-10 bg-primary-purple text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-dark-purple gold-glow avatar" 
+               [title]="userName$ | async">
+            {{ userInitials$ | async }}
+          </div>
+          @if (showProfileDropdown) {
+            <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-50 user-menu">
+              <a (click)="navigateToProfileSection('info')" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">Informations Personnelles</a>
+              <a (click)="navigateToProfileSection('password')" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">Changer Mot de Passe</a>
+              <a (click)="navigateToProfileSection('reservation-history')" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">Historique des Réservations</a>
+              <a (click)="navigateToProfileSection('subscription')" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">Historique des Abonnements</a>
+              <a (click)="navigateToProfileSection('notifications')" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">Notifications</a>
+              <a (click)="logout()" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">Déconnexion</a>
+            </div>
+          }
+        </div>
+      } @else {
+        <!-- Logged-out Buttons -->
+        <a routerLink="/auth" class="bg-primary-purple text-white px-6 py-2 rounded-md font-medium hover:bg-dark-purple transition-colors gold-glow auth-button">
+          Connexion
+        </a>
+        <a routerLink="/auth" [queryParams]="{signup: true}" class="bg-gold-500 text-gray-900 px-6 py-2 rounded-md font-medium hover:bg-gold-600 transition-colors gold-glow auth-button">
+          S'inscrire
+        </a>
+      }
     </div>
   </div>
 </nav>

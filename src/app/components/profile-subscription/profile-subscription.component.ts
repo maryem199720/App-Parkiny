@@ -71,7 +71,7 @@ export class ProfileSubscriptionComponent implements OnInit {
     this.isLoading.set(true);
     this.errorMessage.set(null);
     this.subscriptionService.getActiveSubscription(userId).subscribe({
-      next: (sub) => {
+      next: (sub: Subscription) => {
         this.subscription.set(sub);
         this.loadSubscriptionHistory(userId);
         console.log('Active subscription:', sub);

@@ -1,175 +1,105 @@
-/* Tailwind Directives */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
-/* RemixIcon fonts configuration */
-@font-face {
-  font-family: 'remixicon';
-  src: url('/assets/fonts/remixicon/remixicon.woff2') format('woff2'),
-       url('/assets/fonts/remixicon/remixicon.woff') format('woff'),
-       url('/assets/fonts/remixicon/remixicon.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
+:root {
+  --primary-purple: #6a1b9a;
+  --dark-purple: #5b1482;
+  --gold: #D4AF37;
+  --light-purple: #e9d5ff;
 }
 
-/* Root variables */
-@layer base {
-  :root {
-    --primary-purple: #6a1b9a;
-    --dark-purple: #5b1482;
-    --gold: #D4AF37;
-    --light-purple: #e9d5ff;
-  }
-}
-
-/* Global Form Styles */
-@layer components {
-  /* Form Container */
-  .form-container {
-    @apply bg-white/90 backdrop-blur-md rounded-3xl shadow-md p-8 max-w-3xl mx-auto relative;
-  }
-
-  /* Input Wrapper for Floating Labels and Password Toggle */
-  .input-wrapper {
-    @apply relative mb-6;
-  }
-
-  /* Input Field */
-  .input-field {
-    @apply w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gold-500/50 transition-all duration-300;
-  }
-
-  .input-field:focus {
-    @apply border-gold-500;
-  }
-
-  /* Floating Label */
-  .floating-label {
-    @apply absolute left-4 top-3 text-gray-400 text-sm transition-all duration-200 pointer-events-none;
-  }
-
-  .input-field:focus ~ .floating-label,
-  .input-field:not(:placeholder-shown) ~ .floating-label {
-    @apply top-[-8px] left-2 text-xs bg-white px-1 text-gold-500;
-  }
-
-  /* Password Toggle */
-  .password-toggle {
-    @apply absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400;
-  }
-
-  .password-toggle:hover {
-    @apply text-primary-purple;
-  }
-
-  /* Buttons (Unified Gradient with Flash Icon) */
-  .btn-primary,
-  .btn-secondary {
-    @apply relative bg-gradient-to-r from-primary-purple to-dark-purple text-white border-none rounded-md text-lg cursor-pointer p-3 flex items-center justify-center gap-2;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-  }
-
-  .btn-primary:hover,
-  .btn-secondary:hover {
-    @apply bg-dark-purple transform -translate-y-0.5;
-  }
-
-  .btn-primary:disabled {
-    @apply bg-gray-300 text-gray-600 cursor-not-allowed;
-  }
-
-  /* Flash Icon Styling */
-  .btn-primary::before,
-  .btn-secondary::before {
-    content: '\ea66'; /* RemixIcon ri-flask-line */
-    font-family: 'remixicon';
-    color: var(--gold);
-    font-size: 1.25rem;
-  }
-
-  /* Error Message */
-  .error-message {
-    @apply text-red-500 text-xs mt-1;
-  }
-
-  /* Profile Vehicles Component Styles */
-  .error-message-container {
-    @apply fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded-md shadow-lg z-50;
-    max-width: 300px;
-    animation: slideIn 0.3s ease-out;
-  }
-
-  /* Ensure select elements match input-field styling */
-  select.input-field {
-    @apply appearance-none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 1rem center;
-    background-size: 1em;
-  }
-
-  /* Custom Datepicker Panel Styles */
-  .compact-datepicker {
-    @apply w-56 p-2 bg-white rounded-lg shadow-md border border-gray-200 text-sm absolute z-50;
-    max-height: 240px;
-    overflow-y: auto;
-
-    .mat-calendar-table {
-      @apply w-full;
-    }
-
-    .mat-calendar-body-cell {
-      @apply p-1;
-    }
-
-    .mat-calendar-body-selected {
-      @apply bg-gold-500 text-white;
-    }
-
-    .mat-calendar-body-today {
-      @apply border border-gold-500;
-    }
-  }
-
-  @keyframes slideIn {
-    from {
-      transform: translateY(100%);
-      opacity: 0;
-    }
-    to {
-      transform: translateY(0);
-      opacity: 1;
-    }
-  }
-
-  /* Responsive Adjustments */
-  @media (max-width: 768px) {
-    .form-container {
-      @apply p-6 w-full;
-    }
-
-    .input-field {
-      @apply py-2;
-    }
-
-    .btn-primary,
-    .btn-secondary {
-      @apply py-2 text-base;
-    }
-  }
-}
-
-/* Global Body Styles */
 body {
-  @apply font-sans bg-gradient-to-r from-purple-100/10 to-dark-purple/10 min-h-screen flex flex-col;
-  padding: 1rem 0; /* Added padding for better content breathing room */
+  font-family: 'Poppins', sans-serif;
+  background-color: #f9fafb;
 }
 
-main {
-  @apply flex-grow;
+/* Typing Effect */
+.typing-effect {
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 4px solid var(--gold);
+  animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
 }
 
-.container {
-  @apply px-4 md:px-8; /* Increased padding for larger screens */
+@keyframes typing {
+  from { width: 0 }
+  to { width: 100% }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent }
+  50% { border-color: var(--gold) }
+}
+
+/* Hover Effects */
+.gold-glow:hover {
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.8);
+}
+
+.animate-bounce {
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+
+.animate-pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4); }
+  70% { box-shadow: 0 0 0 15px rgba(212, 175, 55, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+}
+
+/* Parking Space */
+.parking-space {
+  transition: all 0.3s ease;
+  border: 3px solid #e5e7eb;
+  cursor: pointer;
+  padding: 1rem;
+  min-width: 120px;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.parking-space:hover {
+  transform: scale(1.1);
+}
+
+/* Update Colors for Parking Spaces */
+.parking-space.bg-blue-500 {
+  background-color: var(--gold) !important;
+  color: #1F2937;
+}
+
+.parking-space.bg-purple-600 {
+  background-color: var(--primary-purple) !important;
+  color: #FFFFFF;
+}
+
+.parking-space.bg-gray-400 {
+  background-color: var(--dark-purple) !important;
+  color: #E5E7EB;
+}
+
+.parking-space.bg-gradient-to-r {
+  background: linear-gradient(to right, var(--primary-purple), var(--gold)) !important;
+  color: #FFFFFF;
+}
+
+/* Progress Bar */
+.progress-bar {
+  @apply h-8 bg-gray-200 rounded-full;
+}
+
+.progress-fill {
+  @apply h-full bg-gold-500 rounded-full transition-all duration-300;
 }

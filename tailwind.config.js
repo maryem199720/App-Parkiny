@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./src/**/*.{html,ts}"],
+  content: ["./src/**/*.{html,ts,scss}"],
   theme: {
     extend: {
       colors: {
@@ -53,6 +53,14 @@ module.exports = {
         'reservation': '0 8px 30px rgba(0, 0, 0, 0.08)',
         'confirmation': '0 5px 20px rgba(0, 0, 0, 0.1)',
         'gold-glow': '0 0 8px rgba(255, 215, 0, 0.3)'
+      },
+      width: {
+        '48': '48px',
+        '300': '300px'
+      },
+      height: {
+        '48': '48px',
+        '300': '300px'
       }
     }
   },

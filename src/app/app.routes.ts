@@ -24,11 +24,6 @@ export const routes: Routes = [
         data: { public: true }
       },
       {
-        path: 'faq',
-        loadComponent: () => import('./components/faq/faq.component').then(m => m.FaqComponent),
-        data: { public: true }
-      },
-      {
         path: 'how-it-works',
         loadComponent: () => import('./components/how-it-works/how-it-works.component').then(m => m.HowItWorksComponent),
         data: { public: true }
@@ -42,59 +37,54 @@ export const routes: Routes = [
         path: 'auth',
         loadComponent: () => import('./auth/components/auth/auth.component').then(m => m.AuthComponent),
         data: { public: true }
-      }
-    ]
-  },
-  {
-    path: 'dashboard',
-    loadComponent: () => import('./components/user-dashboard/user-dashboard.component').then(m => m.UserDashboardComponent),
-    canActivate: [AuthGuard],
-    data: { role: 'ROLE_USER' },
-    children: [
-      {
-        path: '',
-        loadComponent: () => import('./components/user-dashboard/components/dashboard/dashboard.component').then(m => m.DashboardComponent)
       },
       {
         path: 'reservations',
-        loadComponent: () => import('./components/reservations/reservations.component').then(m => m.ReservationsComponent)
+        loadComponent: () => import('./components/reservations/reservations.component').then(m => m.ReservationsComponent),
+        canActivate: [AuthGuard],
+        data: { role: 'ROLE_USER' }
       },
       {
-        path: 'profile/info',
-        loadComponent: () => import('./components/profile-info/profile-info.component').then(m => m.ProfileInfoComponent)
-      },
-      {
-        path: 'profile/password',
-        loadComponent: () => import('./components/profile-password/profile-password.component').then(m => m.ProfilePasswordComponent)
-      },
-      {
-        path: 'profile/vehicles',
-        loadComponent: () => import('./components/profile-vehicles/profile-vehicles.component').then(m => m.ProfileVehiclesComponent)
-      },
-      {
-        path: 'profile/forgot-password',
-        loadComponent: () => import('./components/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent)
-      },
-      {
-        path: 'profile/subscription',
-        loadComponent: () => import('./components/profile-subscription/profile-subscription.component').then(m => m.ProfileSubscriptionComponent)
-      },
-      {
-        path: 'profile/history',
-        loadComponent: () => import('./components/reservation-history/reservation-history.component').then(m => m.ReservationHistoryComponent)
-      },
-      {
-        path: 'subscriptions',
-        loadComponent: () => import('./components/subscription/subscription.component').then(m => m.SubscriptionComponent)
-      },
-      {
-        path: 'notifications',
-        loadComponent: () => import('./components/user-dashboard/components/notifications/notifications.component').then(m => m.NotificationsComponent)
+        path: 'subscription',
+        loadComponent: () => import('./components/subscription/subscription.component').then(m => m.SubscriptionComponent),
+        canActivate: [AuthGuard],
+        data: { role: 'ROLE_USER' }
       },
       {
         path: 'profile',
-        redirectTo: 'profile/info',
-        pathMatch: 'full'
+        canActivate: [AuthGuard],
+        data: { role: 'ROLE_USER' },
+        children: [
+          { path: '', redirectTo: 'info', pathMatch: 'full' },
+          {
+            path: 'info',
+            loadComponent: () => import('./components/profile-info/profile-info.component').then(m => m.ProfileInfoComponent)
+          },
+          {
+            path: 'password',
+            loadComponent: () => import('./components/profile-password/profile-password.component').then(m => m.ProfilePasswordComponent)
+          },
+          {
+            path: 'vehicles',
+            loadComponent: () => import('./components/profile-vehicles/profile-vehicles.component').then(m => m.ProfileVehiclesComponent)
+          },
+          {
+            path: 'forgot-password',
+            loadComponent: () => import('./components/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent)
+          },
+          {
+            path: 'subscription',
+            loadComponent: () => import('./components/profile-subscription/profile-subscription.component').then(m => m.ProfileSubscriptionComponent)
+          },
+          {
+            path: 'reservation-history',
+            loadComponent: () => import('./components/reservation-history/reservation-history.component').then(m => m.ReservationHistoryComponent)
+          },
+          {
+            path: 'notifications',
+            loadComponent: () => import('./components/user-dashboard/components/notifications/notifications.component').then(m => m.NotificationsComponent)
+          }
+        ]
       }
     ]
   },

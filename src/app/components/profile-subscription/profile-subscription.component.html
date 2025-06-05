@@ -1,34 +1,48 @@
 <div class="container mx-auto p-4">
-  <h1 class="text-2xl font-bold mb-4">Gestion des Abonnements</h1>
+  <h1 class="text-2xl font-bold mb-6 text-primary-purple">Gestion des Abonnements</h1>
 
   @if (isLoading()) {
     <mat-spinner class="mx-auto"></mat-spinner>
   } @else {
-    <div class="mb-6">
-      <h2 class="text-xl font-semibold mb-2">Abonnement Actif</h2>
+    <!-- Active Subscription Section -->
+    <div class="mb-8">
+      <h2 class="text-xl font-semibold mb-4 text-dark-purple">Abonnement Actif</h2>
       @if (subscription(); as sub) {
-        <div class="bg-white shadow-md rounded-lg p-4">
-          <p>Type: {{ sub.subscriptionType }}</p>
-          <p>Statut: {{ sub.status }}</p>
-          <p>Places restantes: {{ sub.remainingPlaces }}</p>
-          <p>Début: {{ sub.startDate | date:'d MMM yyyy' }}</p>
-          <p>Fin: {{ sub.endDate | date:'d MMM yyyy' }}</p>
+        <div class="form-container">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="input-wrapper">
+              <p><span class="text-gold-500 font-medium">Type:</span> {{ sub.subscriptionType }}</p>
+            </div>
+            <div class="input-wrapper">
+              <p><span class="text-gold-500 font-medium">Statut:</span> {{ sub.status }}</p>
+            </div>
+            <div class="input-wrapper">
+              <p><span class="text-gold-500 font-medium">Places restantes:</span> {{ sub.remainingPlaces }}</p>
+            </div>
+            <div class="input-wrapper">
+              <p><span class="text-gold-500 font-medium">Début:</span> {{ sub.startDate ? (sub.startDate | date:'d MMM yyyy') : 'Non défini' }}</p>
+            </div>
+            <div class="input-wrapper">
+              <p><span class="text-gold-500 font-medium">Fin:</span> {{ sub.endDate ? (sub.endDate | date:'d MMM yyyy') : 'Non défini' }}</p>
+            </div>
+          </div>
         </div>
       } @else {
         <p class="text-gray-600">Aucun abonnement actif.</p>
       }
     </div>
 
-    <div class="mb-6">
-      <h2 class="text-xl font-semibold mb-2">Historique des Abonnements</h2>
-      <div class="flex flex-col sm:flex-row gap-4 mb-4">
-        <mat-form-field appearance="outline" class="w-48">
-          <mat-label>Mois et Année</mat-label>
-          <input matInput [matDatepicker]="picker" [(ngModel)]="selectedDate" class="input-field" (dateChange)="onMonthSelected($event.value)" placeholder="Sélectionner une date" />
+    <!-- Subscription History Section -->
+    <div class="mb-8">
+      <h2 class="text-xl font-semibold mb-4 text-dark-purple">Historique des Abonnements</h2>
+      <div class="form-container flex flex-col sm:flex-row gap-4 mb-6 items-center">
+        <mat-form-field appearance="outline" class="w-full sm:w-48">
+          <mat-label class="floating-label">Mois et Année</mat-label>
+          <input matInput [matDatepicker]="picker" [(ngModel)]="selectedDate" (dateChange)="onMonthSelected($event.value)" placeholder="Sélectionner une date" class="input-field" />
           <mat-datepicker-toggle matIconSuffix [for]="picker">
             <mat-icon matDatepickerToggleIcon class="text-primary-purple">calendar_month</mat-icon>
           </mat-datepicker-toggle>
-          <mat-datepicker #picker startView="year" (monthSelected)="onMonthSelected($event)" panelClass="compact-datepicker"></mat-datepicker>
+          <mat-datepicker #picker startView="year" (monthSelected)="onMonthSelected($event)" panelClass="custom-datepicker"></mat-datepicker>
         </mat-form-field>
         <button mat-raised-button class="btn-primary px-6 py-2" (click)="applyFilters()">Appliquer</button>
         <button mat-raised-button class="btn-secondary px-6 py-2" (click)="resetFilters()">Réinitialiser</button>
@@ -37,14 +51,26 @@
       @if (subscriptionHistory().length === 0) {
         <p class="text-gray-600">Aucun historique disponible.</p>
       } @else {
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           @for (sub of subscriptionHistory(); track sub.id) {
-            <div class="bg-white shadow-md rounded-lg p-4 relative">
-              <p>Type: {{ sub.subscriptionType }}</p>
-              <p>Statut: {{ sub.status }}</p>
-              <p>Places: {{ sub.remainingPlaces }}</p>
-              <p>Début: {{ sub.startDate | date:'d MMM yyyy' }}</p>
-              <p>Fin: {{ sub.endDate | date:'d MMM yyyy' }}</p>
+            <div class="form-container relative">
+              <div class="grid grid-cols-1 gap-2">
+                <div class="input-wrapper">
+                  <p><span class="text-gold-500 font-medium">Type:</span> {{ sub.subscriptionType }}</p>
+                </div>
+                <div class="input-wrapper">
+                  <p><span class="text-gold-500 font-medium">Statut:</span> {{ sub.status }}</p>
+                </div>
+                <div class="input-wrapper">
+                  <p><span class="text-gold-500 font-medium">Places:</span> {{ sub.remainingPlaces }}</p>
+                </div>
+                <div class="input-wrapper">
+                  <p><span class="text-gold-500 font-medium">Début:</span> {{ sub.startDate ? (sub.startDate | date:'d MMM yyyy') : 'Non défini' }}</p>
+                </div>
+                <div class="input-wrapper">
+                  <p><span class="text-gold-500 font-medium">Fin:</span> {{ sub.endDate ? (sub.endDate | date:'d MMM yyyy') : 'Non défini' }}</p>
+                </div>
+              </div>
               <button mat-icon-button class="absolute top-2 right-2 text-primary-purple hover:text-dark-purple" (click)="deleteSubscription(sub.id)" title="Supprimer">
                 <mat-icon>delete</mat-icon>
               </button>

@@ -1,3 +1,4 @@
+// src/app/services/reservation.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -17,7 +18,7 @@ export class ReservationService {
     });
   }
 
-  createReservation(reservation: any): Observable<ReservationResponse> {
+  createReservation(reservation: Reservation): Observable<ReservationResponse> {
     return this.http.post<ReservationResponse>(`${this.apiUrl}/createReservation`, reservation, {
       headers: this.getAuthHeaders()
     });

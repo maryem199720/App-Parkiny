@@ -1,5 +1,5 @@
 // subscription.service.ts
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { StorageService } from 'src/app/auth/services/storage/storage.service';
@@ -11,18 +11,11 @@ export interface Subscription {
   billingCycle: 'monthly' | 'annual';
   status: string;
   remainingPlaces: number;
-  startDate?: string;
-  endDate?: string;
+  startDate: string; // Adjusted to string to match backend
+  endDate: string;   // Adjusted to string to match backend
 }
 
-export interface SubscriptionHistory {
-  id: number;
-  subscriptionId: number;
-  action: string;
-  date: string;
-  details: string;
-}
-
+// Remove SubscriptionHistory interface since we're using Subscription[] for history
 @Injectable({
   providedIn: 'root',
 })
@@ -46,10 +39,10 @@ export class SubscriptionService {
   }
 
   getActiveSubscription(userId: number): Observable<Subscription> {
-    return this.http.get<Subscription>(`${this.apiUrl}/subscriptions/active?userId=${userId}`, {
-      headers: this.getAuthHeaders(),
-    });
-  }
+  return this.http.get<Subscription>(`${this.apiUrl}/subscriptions/active?userId=${userId}`, {
+    headers: this.getAuthHeaders(),
+  });
+}
 
   getUserProfile(): Observable<any> {
     return this.http.get(`${this.apiUrl}/user/profile`, {
@@ -61,7 +54,7 @@ export class SubscriptionService {
     subscriptionType: string,
     billingCycle: string,
     amount: number,
-    paymentMethod: 'CARTE_BANCAIRE', // Restrict to CARTE_BANCAIRE only
+    paymentMethod: 'CARTE_BANCAIRE',
     email: string,
     cardDetails: any
   ): Observable<any> {
@@ -85,19 +78,21 @@ export class SubscriptionService {
   }
 
   confirmSubscription(sessionId: string, confirmationCode: string): Observable<any> {
-  const params = { sessionId, subscriptionConfirmationCode: confirmationCode }; // Match backend param name
-  return this.http.post(`${this.apiUrl}/confirmSubscription`, null, { 
-    params,
-    headers: this.getAuthHeaders() // Add authentication headers
-  });
-}
+    const body = { sessionId, confirmationCode }; // Match backend expected keys
+    return this.http.post(`${this.apiUrl}/confirmSubscription`, body, {
+      headers: this.getAuthHeaders()
+    });
+  }
 
   getSubscriptionHistory(userId: number, month?: number, year?: number): Observable<Subscription[]> {
-    let url = `${this.apiUrl}/subscriptions/history?userId=${userId}`;
+    let params = new HttpParams().set('userId', userId.toString());
     if (month && year) {
-      url += `&month=${month}&year=${year}`;
+      params = params.set('month', month.toString()).set('year', year.toString());
     }
-    return this.http.get<Subscription[]>(url, { headers: this.getAuthHeaders() });
+    return this.http.get<Subscription[]>(`${this.apiUrl}/subscriptions/history`, {
+      headers: this.getAuthHeaders(),
+      params
+    });
   }
 
   deleteSubscription(subscriptionId: number): Observable<void> {

@@ -1,55 +1,163 @@
-<!-- src/app/components/about/about.component.html -->
 <div class="about-hero mb-16">
   <div class="container mx-auto px-6">
-    <h1 class="text-4xl md:text-5xl font-bold mb-4">{{ aboutContent.hero.title }}</h1>
-    <p class="text-xl text-gold-200">{{ aboutContent.hero.subtitle }}</p>
+    <h1 class="text-4xl md:text-5xl font-bold mb-4">{{ aboutContent.hero?.title }}</h1>
+    <p class="text-xl text-gold-200">{{ aboutContent.hero?.subtitle }}</p>
   </div>
 </div>
 
-<div *ngIf="isLoading" class="flex justify-center items-center h-64">
-  <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div>
+<!-- Loading Spinner -->
+<div class="loading-spinner" *ngIf="isLoading">
+  <div class="spinner"></div>
 </div>
 
 <div class="container mx-auto px-6 py-16" *ngIf="!isLoading">
+  <!-- Vision Section -->
   <section class="mb-20">
-    <h2 class="text-3xl font-bold text-center mb-12 section-title">Our Client</h2>
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden client-card">
+    <h2 class="text-3xl font-bold text-center mb-12 section-title">
+      {{ aboutContent.vision?.title }}
+    </h2>
+    
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
       <div class="md:flex">
-        <div class="md:w-1/3 bg-primary p-8 text-white flex flex-col justify-center items-center text-center">
-          <h3 class="text-2xl font-bold mb-2">{{ aboutContent.client.name }}</h3>
-          <p class="text-gold-200 mb-4">Founded in {{ aboutContent.client.founded }}</p>
-          <p class="text-sm">{{ aboutContent.client.location }}</p>
+        <div class="md:w-1/2 p-8">
+          <p class="text-gray-700 leading-relaxed mb-6">
+            {{ aboutContent.vision?.content }}
+          </p>
+          
+          <h3 class="text-xl font-semibold mb-4">
+            Nos Objectifs
+          </h3>
+          
+          <ul class="space-y-2">
+            <li *ngFor="let point of aboutContent.vision?.keyPoints" class="flex items-start">
+              <div class="w-6 h-6 flex items-center justify-center bg-primary/10 rounded-full mr-3 mt-1 text-primary">
+                <i class="ri-check-line"></i>
+              </div>
+              <span class="text-gray-700">{{ point }}</span>
+            </li>
+          </ul>
         </div>
-        <div class="md:w-2/3 p-8">
-          <p class="text-gray-700 leading-relaxed">{{ aboutContent.client.description }}</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="mb-20">
-    <h2 class="text-3xl font-bold text-center mb-12 section-title">{{ aboutContent.project.title }}</h2>
-    <div class="bg-gray-50 p-8 rounded-xl">
-      <p class="text-gray-700 leading-relaxed mb-8">{{ aboutContent.project.description }}</p>
-      <h3 class="text-xl font-semibold mb-4">Main Features</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-start" *ngFor="let feature of aboutContent.project.features">
-          <div class="w-10 h-10 flex items-center justify-center bg-primary/10 rounded-full mr-4 mt-1 text-primary">
-            <i class="ri-check-line"></i>
+        <div class="md:w-1/2 bg-primary p-8 text-white flex flex-col justify-center">
+          <div class="vision-image-container mb-6">
+            <img src="assets/images/smart-parking-vision.jpg" alt="Smart Parking Vision" class="rounded-lg shadow-lg"
+                 onerror="this.src='https://via.placeholder.com/600x400?text=Smart+Parking+Vision'; this.onerror=null;">
           </div>
-          <p class="text-gray-700">{{ feature }}</p>
+          <blockquote class="italic text-gold-200 border-l-4 border-gold-500 pl-4">
+            "Notre vision est de transformer le stationnement en une expérience sans stress, intelligente et efficace pour tous les conducteurs tunisiens."
+          </blockquote>
         </div>
       </div>
     </div>
   </section>
-
+  
+  <!-- Technology Section -->
   <section class="mb-20">
-    <h2 class="text-3xl font-bold text-center mb-12 section-title">{{ aboutContent.team.title }}</h2>
+    <h2 class="text-3xl font-bold text-center mb-12 section-title">
+      {{ aboutContent.technology?.title }}
+    </h2>
+    
+    <div class="bg-white p-8 rounded-xl shadow-lg mb-10">
+      <div class="md:flex items-center mb-8">
+        <div class="md:w-1/2 mb-6 md:mb-0 md:pr-8">
+          <h3 class="text-2xl font-semibold mb-4 text-primary">
+            Reconnaissance de Plaques Tunisiennes
+          </h3>
+          <p class="text-gray-700 leading-relaxed mb-6">
+            {{ aboutContent.technology?.content }}
+          </p>
+          
+          <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
+            <h4 class="font-medium text-gray-800 mb-2">
+              Comment ça fonctionne
+            </h4>
+            <ul class="space-y-2">
+              <li *ngFor="let detail of aboutContent.technology?.details" class="flex items-start">
+                <div class="w-6 h-6 flex items-center justify-center bg-primary/10 rounded-full mr-3 mt-1 text-primary">
+                  <i class="ri-checkbox-circle-line"></i>
+                </div>
+                <span class="text-gray-700">{{ detail }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="md:w-1/2">
+          <div class="tech-image-container rounded-lg overflow-hidden shadow-lg">
+            <img src="assets/images/license-plate-recognition.jpg" alt="License Plate Recognition Technology" class="w-full h-auto"
+                 onerror="this.src='https://via.placeholder.com/600x400?text=License+Plate+Recognition'; this.onerror=null;">
+          </div>
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+        <div *ngFor="let advantage of aboutContent.technology?.advantages" class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+          <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-4">
+            <i class="ri-shield-check-line text-xl"></i>
+          </div>
+          <h4 class="font-semibold text-gray-800 mb-2">{{ advantage }}</h4>
+        </div>
+      </div>
+    </div>
+    
+    <div class="bg-primary text-white p-8 rounded-xl">
+      <div class="md:flex items-center">
+        <div class="md:w-2/3 mb-6 md:mb-0 md:pr-8">
+          <h3 class="text-2xl font-bold mb-4">
+            Technologie Adaptée aux Besoins Tunisiens
+          </h3>
+          <p class="text-gold-200 mb-4">
+            Notre système est spécialement conçu pour reconnaître les plaques d'immatriculation tunisiennes dans toutes leurs variantes : civiles, taxis, officielles, et plus encore.
+          </p>
+        </div>
+        <div class="md:w-1/3 flex justify-center">
+          <div class="plate-example bg-white p-4 rounded-lg shadow-lg transform rotate-3">
+            <div class="bg-black text-white p-2 text-center font-bold rounded">
+              1234 تونس 56
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- How It Works Section -->
+  <section class="mb-20">
+    <h2 class="text-3xl font-bold text-center mb-12 section-title">
+      {{ aboutContent.howItWorks?.title }}
+    </h2>
+    
+    <div class="how-it-works-timeline">
+      <div *ngFor="let step of aboutContent.howItWorks?.steps; let i = index" class="timeline-item">
+        <div class="timeline-number">{{ i + 1 }}</div>
+        <div class="timeline-content">
+          <h3 class="text-xl font-semibold mb-2">{{ step.title }}</h3>
+          <p class="text-gray-600">{{ step.description }}</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mt-12 text-center">
+      <a routerLink="/how-it-works" class="inline-flex items-center px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">
+        En savoir plus
+        <i class="ri-arrow-right-line ml-2"></i>
+      </a>
+    </div>
+  </section>
+  
+  <!-- Team Section -->
+  <section class="mb-20">
+    <h2 class="text-3xl font-bold text-center mb-12 section-title">
+      {{ aboutContent.team?.title }}
+    </h2>
+    
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      <div class="team-member text-center" *ngFor="let member of aboutContent.team.members">
+      <div class="team-member text-center" *ngFor="let member of aboutContent.team?.members">
         <div class="w-32 h-32 mx-auto bg-gray-200 rounded-full mb-4 overflow-hidden">
-          <img [src]="member.image || 'https://via.placeholder.com/128x128'" alt="{{ member.name }}"
-               class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/128x128'; this.onerror=null;">
+          <img 
+            [src]="member.image" 
+            alt="{{ member.name }}"
+            class="w-full h-full object-cover"
+            onerror="this.src='https://via.placeholder.com/128x128'; this.onerror=null;"
+          >
         </div>
         <h3 class="text-xl font-semibold mb-1">{{ member.name }}</h3>
         <p class="text-primary mb-3">{{ member.role }}</p>
@@ -57,37 +165,44 @@
       </div>
     </div>
   </section>
-
+  
+  <!-- Project Section -->
   <section class="mb-20">
-    <h2 class="text-3xl font-bold text-center mb-12 section-title">{{ aboutContent.technology.title }}</h2>
-    <div class="bg-white p-8 rounded-xl shadow-lg mb-10">
-      <p class="text-gray-700 leading-relaxed mb-8">{{ aboutContent.technology.description }}</p>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="tech-feature p-6 rounded-lg border border-gray-200" *ngFor="let feature of aboutContent.technology.features">
-          <div class="flex items-center mb-3">
-            <div class="w-8 h-8 flex items-center justify-center bg-gold-100 rounded-full mr-3 text-gold-600">
-              <i class="ri-check-line"></i>
-            </div>
-            <h4 class="text-lg font-semibold">{{ feature }}</h4>
+    <h2 class="text-3xl font-bold text-center mb-12 section-title">
+      {{ aboutContent.project?.title }}
+    </h2>
+    
+    <div class="bg-gray-50 p-8 rounded-xl">
+      <p class="text-gray-700 leading-relaxed mb-8">
+        {{ aboutContent.project?.description }}
+      </p>
+      
+      <h3 class="text-xl font-semibold mb-4">
+        Fonctionnalités Principales
+      </h3>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-start" *ngFor="let feature of aboutContent.project?.features">
+          <div class="w-10 h-10 flex items-center justify-center bg-primary/10 rounded-full mr-4 mt-1 text-primary">
+            <i class="ri-check-line"></i>
+          </div>
+          <div>
+            <p class="text-gray-700">{{ feature }}</p>
           </div>
         </div>
       </div>
     </div>
-    <div class="bg-primary text-white p-8 rounded-xl">
-      <div class="flex flex-col md:flex-row items-center justify-between">
-        <div class="mb-6 md:mb-0 md:mr-8">
-          <h3 class="text-2xl font-bold mb-4">Want to know more?</h3>
-          <p class="text-gold-200">Contact us for more information about our license plate recognition technology.</p>
-        </div>
-        <a routerLink="/contact" class="bg-white text-primary px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">Contact Us</a>
-      </div>
-    </div>
   </section>
-
+  
+  <!-- Timeline Section -->
   <section class="mb-20">
-    <h2 class="text-3xl font-bold text-center mb-16 section-title">{{ aboutContent.timeline.title }}</h2>
+    <h2 class="text-3xl font-bold text-center mb-16 section-title">
+      {{ aboutContent.timeline?.title }}
+    </h2>
+    
     <div class="timeline">
-      <div *ngFor="let event of aboutContent.timeline.events; let i = index" [ngClass]="{'timeline-item': true, 'timeline-left': i % 2 === 0, 'timeline-right': i % 2 !== 0}">
+      <div *ngFor="let event of aboutContent.timeline?.events; let i = index" 
+           [ngClass]="{'timeline-item': true, 'timeline-left': i % 2 === 0, 'timeline-right': i % 2 !== 0}">
         <div class="timeline-content">
           <h3 class="text-lg font-semibold text-primary mb-1">{{ event.date }}</h3>
           <h4 class="text-xl font-bold mb-2">{{ event.title }}</h4>
@@ -96,10 +211,73 @@
       </div>
     </div>
   </section>
-
+  
+  <!-- Partners Section -->
+  <section class="mb-20" *ngIf="aboutContent.partners?.list && aboutContent.partners.list.length > 0">
+    <h2 class="text-3xl font-bold text-center mb-12 section-title">
+      {{ aboutContent.partners?.title }}
+    </h2>
+    
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+      <div *ngFor="let partner of aboutContent.partners?.list" class="flex items-center justify-center p-4 bg-white rounded-lg shadow-sm">
+        <img src="https://via.placeholder.com/150x80?text={{partner}}" [alt]="partner" class="max-h-16">
+      </div>
+    </div>
+  </section>
+  
+  <!-- Testimonials Section -->
+  <section class="mb-20" *ngIf="aboutContent.testimonials?.list && aboutContent.testimonials.list.length > 0">
+    <h2 class="text-3xl font-bold text-center mb-12 section-title">
+      {{ aboutContent.testimonials?.title }}
+    </h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div *ngFor="let testimonial of aboutContent.testimonials?.list" class="bg-white p-6 rounded-xl shadow-md">
+        <div class="flex items-center mb-4">
+          <div class="w-12 h-12 bg-gray-200 rounded-full mr-4"></div>
+          <div>
+            <h4 class="font-semibold">{{ testimonial.name }}</h4>
+            <p class="text-sm text-gray-600">{{ testimonial.position }}</p>
+          </div>
+        </div>
+        <p class="text-gray-700 italic">
+          "{{ testimonial.text }}"
+        </p>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Impact Section -->
+  <section class="mb-20">
+    <h2 class="text-3xl font-bold text-center mb-12 section-title">
+      {{ aboutContent.impact?.title }}
+    </h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div *ngFor="let point of aboutContent.impact?.points; let i = index" class="impact-card">
+        <div class="impact-icon">
+          <i [class]="getImpactIcon(i)"></i>
+        </div>
+        <h3 class="impact-title">{{ point }}</h3>
+      </div>
+    </div>
+  </section>
+  
+  <!-- CTA Section -->
   <section class="bg-gradient-to-r from-primary to-purple-800 text-white p-12 rounded-xl text-center">
-    <h2 class="text-3xl font-bold mb-4">Final Year Project - June 2025</h2>
-    <p class="text-xl text-gold-200 mb-8">Developed by computer science students to meet TuniPark’s needs.</p>
-    <a routerLink="/contact" class="bg-gold-500 text-dark px-10 py-4 rounded-lg font-bold text-lg hover:bg-gold-600 transition-colors inline-block">Contact Us</a>
+    <h2 class="text-3xl font-bold mb-4">
+      {{ aboutContent.cta?.title }}
+    </h2>
+    <p class="text-xl text-gold-200 mb-8">
+      Découvrez comment Parkiny peut transformer votre expérience de stationnement.
+    </p>
+    <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+      <a routerLink="/contact" class="bg-gold-500 text-dark px-8 py-4 rounded-lg font-bold text-lg hover:bg-gold-600 transition-colors">
+        {{ aboutContent.cta?.buttons[0] }}
+      </a>
+      <a routerLink="/auth/register" class="bg-white text-primary px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 transition-colors">
+        {{ aboutContent.cta?.buttons[1] }}
+      </a>
+    </div>
   </section>
 </div>

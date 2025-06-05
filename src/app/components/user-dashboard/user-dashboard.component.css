@@ -41,8 +41,18 @@ main {
 }
 
 aside {
-  min-height: 100vh;
+  min-height: calc(100vh - 5rem); /* Subtract header height */
+  position: fixed;
+  top: 5rem; /* Start below header */
   transition: transform 0.3s ease, width 0.3s ease;
+  z-index: 20;
+}
+
+@media (min-width: 768px) {
+  aside {
+    top: 6rem; /* Adjust for larger screens */
+    min-height: calc(100vh - 6rem); /* Adjust height for larger screens */
+  }
 }
 
 aside a {

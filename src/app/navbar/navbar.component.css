@@ -1,3 +1,4 @@
+/* src/app/navbar/navbar.component.css */
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
@@ -63,7 +64,7 @@ nav.scrolled {
 }
 
 .language-selector button {
-  @apply px-2 py-1 rounded transition-colors duration-200 ease-in-out;
+  @apply px-2 py-1 rounded transition-colors;
 }
 
 .language-selector button:hover {
@@ -71,12 +72,16 @@ nav.scrolled {
 }
 
 .disabled-link {
-  @apply pointer-events-none opacity-60;
+  @apply pointer-events-auto cursor-not-allowed opacity-70 !important;
 }
 
-.user-menu > div,
-.language-selector > div {
+.user-menu {
+  @apply bg-white rounded-lg shadow-md;
   animation: dropdownFadeIn 0.2s ease-out;
+}
+
+.language-selector > div {
+  animation: dropdownFadeIn 0.2s ease-in-out;
 }
 
 @keyframes dropdownFadeIn {
@@ -84,6 +89,15 @@ nav.scrolled {
     @apply opacity-0 -translate-y-2;
   }
   to {
-    @apply opacity-100 translate-y-0;
+    @apply opacity-0;
   }
+}
+
+/* Styles for Avatar */
+.avatar {
+  @apply w-10 h-10 rounded-full flex items-center justify-center text-white cursor-pointer transition-colors;
+}
+
+.avatar:hover {
+  @apply bg-dark-purple;
 }

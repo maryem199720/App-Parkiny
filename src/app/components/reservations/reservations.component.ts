@@ -1,4 +1,3 @@
-
 import { Component, OnInit, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { CommonModule, DatePipe } from '@angular/common';
@@ -12,24 +11,19 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { ReactiveFormsModule } from '@angular/forms';
-import { HttpClient, HttpHeaders, HttpParams, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams, HttpErrorResponse, HttpClientModule } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { StorageService } from 'src/app/auth/services/storage/storage.service';
 import { SubscriptionService } from 'src/app/services/subscription.service';
 import { NgxMaskDirective, NgxMaskPipe, provideNgxMask } from 'ngx-mask';
 import { QrCodeService } from 'src/app/services/qr-code.service';
+import { ReservationService } from 'src/app/services/Reservations/reservation.service';
+import { Reservation, ReservationResponse } from 'src/app/models/reservation.model';
 
 // Interfaces
 export interface ParkingSpot {
   id: string;
   status: 'available' | 'reserved';
-}
-
-export interface ReservationResponse {
-  reservationId: string;
-  paymentVerificationCode?: string | null;
-  reservationConfirmationCode?: string | null;
-  message?: string;
 }
 
 export interface PaymentResponse {
@@ -78,7 +72,8 @@ export interface Vehicle {
     MatProgressSpinnerModule,
     MatSelectModule,
     NgxMaskDirective,
-    NgxMaskPipe
+    NgxMaskPipe,
+    HttpClientModule
   ],
   providers: [DatePipe, provideNgxMask()],
   templateUrl: './reservations.component.html',
@@ -100,7 +95,7 @@ export class ReservationsComponent implements OnInit {
   totalAmount = 0;
   isLoading = false;
   errorMessage = '';
-  reservationId: string | null = null;
+  reservationId: number | null = null; // Changed to number | null
   paymentVerificationCode: string | null = null;
   reservationConfirmationCode: string | null = null;
   isReservationConfirmed = false;
@@ -120,24 +115,25 @@ export class ReservationsComponent implements OnInit {
     private subscriptionService: SubscriptionService,
     private datePipe: DatePipe,
     private cdr: ChangeDetectorRef,
-    private qrCodeService: QrCodeService
+    private qrCodeService: QrCodeService,
+    private reservationService: ReservationService
   ) {
-    const now = new Date();
-    const startTime = new Date(now.getTime() + 60 * 60 * 1000);
-    const endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
-    const formattedDate = this.datePipe.transform(now, 'dd/MM/yyyy') || '';
-    const formattedStartTime = this.datePipe.transform(startTime, 'HH:mm') || '';
-    const formattedEndTime = this.datePipe.transform(endTime, 'HH:mm') || '';
-    const defaultEmail = this.storageService.getUser()?.email || '';
+  const now = new Date();
+  const startTime = new Date(now.getTime() + 10 * 60 * 1000); // 10-minute buffer
+  const endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
+  const formattedDate = this.datePipe.transform(now, 'dd/MM/yyyy') || '';
+  const formattedStartTime = this.datePipe.transform(startTime, 'HH:mm') || '';
+  const formattedEndTime = this.datePipe.transform(endTime, 'HH:mm') || '';
+  const defaultEmail = this.storageService.getUser()?.email || '';
 
-    this.reservationForm = this.fb.group({
-      date: [formattedDate, [Validators.required, this.dateFormatValidator, this.dateRangeValidator]],
-      startTime: [formattedStartTime, [Validators.required, this.startTimeValidator]],
-      endTime: [formattedEndTime, [Validators.required, this.endTimeValidator]],
-      email: [defaultEmail, [Validators.required, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/)]],
-      paymentVerificationCode: [''],
-      reservationConfirmationCode: ['']
-    }, { validators: this.timeRangeValidator });
+  this.reservationForm = this.fb.group({
+    date: [formattedDate, [Validators.required, this.dateFormatValidator, this.dateRangeValidator]],
+    startTime: [formattedStartTime, [Validators.required, this.startTimeValidator]],
+    endTime: [formattedEndTime, [Validators.required, this.endTimeValidator]],
+    email: [defaultEmail, [Validators.required, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/)]],
+    paymentVerificationCode: [''],
+    reservationConfirmationCode: ['']
+  }, { validators: this.timeRangeValidator });
 
     this.paymentForm = this.fb.group({
       cardName: ['', Validators.required],
@@ -476,7 +472,6 @@ export class ReservationsComponent implements OnInit {
   this.isLoading = true;
   this.errorMessage = '';
 
-  // Check form validity
   if (!this.reservationForm.valid) {
     this.errorMessage = 'Veuillez corriger les erreurs dans le formulaire.';
     this.snackBar.open(this.errorMessage, 'OK', { duration: 6000 });
@@ -485,7 +480,6 @@ export class ReservationsComponent implements OnInit {
     return;
   }
 
-  // Check selected spot
   if (!this.selectedSpot || !this.selectedSpot.id) {
     this.errorMessage = 'Veuillez sélectionner une place de parking.';
     this.snackBar.open(this.errorMessage, 'OK', { duration: 6000 });
@@ -494,7 +488,6 @@ export class ReservationsComponent implements OnInit {
     return;
   }
 
-  // Check selected vehicle
   if (this.selectedVehicleIndex === null) {
     this.errorMessage = 'Veuillez sélectionner un véhicule.';
     this.snackBar.open(this.errorMessage, 'OK', { duration: 6000 });
@@ -503,20 +496,13 @@ export class ReservationsComponent implements OnInit {
     return;
   }
 
-  // Get form values
   const dateValue = this.reservationForm.get('date')?.value || '';
   const startTime = this.reservationForm.get('startTime')?.value || '';
   const endTime = this.reservationForm.get('endTime')?.value || '';
-  const vehicleMatricule = this.userVehicles[this.selectedVehicleIndex].matricule;
+  const vehicleMatricule = this.userVehicles[this.selectedVehicleIndex].matricule.toUpperCase();
   const email = this.reservationForm.get('email')?.value;
 
-  // Log the matricule for debugging
-  console.log('Matricule being checked:', vehicleMatricule);
-  console.log('Length:', vehicleMatricule.length);
-  console.log('Characters (codes):', vehicleMatricule.split('').map(c => c.charCodeAt(0)));
-
-  // Updated regex to include Arabic Presentation Forms
-  const tunisianPlateRegex = /^[A-Za-z0-9\s\-\u0600-\u06FF\uFE70-\uFEFF]{6,}$/;
+  const tunisianPlateRegex = /^[A-Z0-9\s\u0600-\u06FF]{3,15}$/;
   if (!tunisianPlateRegex.test(vehicleMatricule)) {
     console.error('Invalid matricule detected:', vehicleMatricule);
     this.errorMessage = 'Matricule invalide. Utilisez le format tunisien (ex. : 123 ABC 456 ou 987 تونس 6543)';
@@ -526,11 +512,18 @@ export class ReservationsComponent implements OnInit {
     return;
   }
 
-  // Rest of the reservation logic
-  const id = parseInt(this.selectedSpot.id.split('-')[1], 10);
-  const reservationData = {
+  const parkingPlaceId = parseInt(this.selectedSpot.id, 10);
+  if (isNaN(parkingPlaceId)) {
+    this.errorMessage = 'ID de place de parking invalide.';
+    this.snackBar.open(this.errorMessage, 'OK', { duration: 6000 });
+    this.isLoading = false;
+    this.cdr.detectChanges();
+    return;
+  }
+
+  const reservationData: Reservation = {
     userId: this.loggedInUserId!,
-    parkingPlaceId: id,
+    parkingPlaceId: parkingPlaceId,
     matricule: vehicleMatricule,
     startTime: `${this.formatDateForBackend(dateValue)}T${startTime.padStart(5, '0')}:00`,
     endTime: `${this.formatDateForBackend(dateValue)}T${endTime.padStart(5, '0')}:00`,
@@ -538,22 +531,39 @@ export class ReservationsComponent implements OnInit {
     paymentMethod: this.hasActiveSubscription ? 'SUBSCRIPTION' : 'CARTE_BANCAIRE',
     email: email,
     subscriptionId: this.hasActiveSubscription ? this.subscriptionId : null,
-    specialRequest: null
+    specialRequest: ''
   };
 
-  console.log('Sending data:', reservationData);
+  // Log the request payload
+  console.log('Reservation Request Payload:', JSON.stringify(reservationData, null, 2));
 
-  this.http.post(`${this.apiUrl}/reservation`, reservationData, {
-    headers: this.getAuthHeaders()
-  }).subscribe({
-    next: (response) => {
+  this.reservationService.createReservation(reservationData).subscribe({
+    next: (response: ReservationResponse) => {
+      if (response.reservationId) {
+        this.reservationId = parseInt(response.reservationId.replace('RES-', '')); // Extract numeric ID
+        this.reservationDetails = {
+          date: dateValue,
+          startTime: startTime,
+          endTime: endTime,
+          vehicleMatricule: vehicleMatricule
+        };
+        this.emailConfirmation = true;
+        if (this.hasActiveSubscription) {
+          this.currentStep = 3;
+        } else {
+          this.currentStep = 3;
+        }
+        this.snackBar.open('Réservation réussie!', 'OK', { duration: 5000 });
+      } else {
+        this.errorMessage = 'Erreur: Aucune ID de réservation retournée.';
+        this.snackBar.open(this.errorMessage, 'OK', { duration: 6000 });
+      }
       this.isLoading = false;
-      this.snackBar.open('Réservation réussie!', 'OK', { duration: 5000 });
       this.cdr.detectChanges();
     },
-    error: (err) => {
-      console.error('Reservation error:', err);
-      this.errorMessage = 'Erreur lors de la réservation.';
+    error: (err: HttpErrorResponse) => {
+      console.error('Reservation error:', JSON.stringify(err.error, null, 2));
+      this.errorMessage = err.error?.message || 'Erreur lors de la réservation.';
       this.snackBar.open(this.errorMessage, 'OK', { duration: 6000 });
       this.isLoading = false;
       this.cdr.detectChanges();
@@ -586,12 +596,12 @@ export class ReservationsComponent implements OnInit {
       return;
     }
 
-    const reservationIdNum = parseInt(this.reservationId.split('-').pop() || '0', 10);
+    const reservationIdNum = this.reservationId; // Use number directly
     const paymentData = {
       reservationId: reservationIdNum,
       amount: this.totalAmount,
-      payment_method: 'CARTE_BANCAIRE',
-      paymentReference: this.paymentForm.get('cardNumber')?.value?.substring(12, 16) || 'XXXX',
+      paymentMethod: 'CARTE_BANCAIRE',
+      paymentReference: this.paymentForm.get('cardNumber')?.value?.slice(0, -4) || 'XXXX',
       cardDetails: {
         cardName: this.paymentForm.get('cardName')?.value || '',
         cardNumber: this.paymentForm.get('cardNumber')?.value || '',
@@ -600,7 +610,7 @@ export class ReservationsComponent implements OnInit {
       }
     };
 
-    console.log('POST request:', JSON.stringify(paymentData));
+    console.log('POST payment data:', JSON.stringify(paymentData));
 
     this.isLoading = true;
     this.http.post<PaymentResponse>(`${this.apiUrl}/payment/processPayment`, paymentData, {
@@ -610,13 +620,13 @@ export class ReservationsComponent implements OnInit {
         this.paymentVerificationCode = response.paymentVerificationCode || null;
         this.reservationForm.get('paymentVerificationCode')?.setValidators([Validators.required]);
         this.reservationForm.get('paymentVerificationCode')?.updateValueAndValidity();
-        this.snackBar.open('Paiement soumis. Vérifiez votre email pour le code de vérification.', 'OK', { duration: 5000 });
+        this.snackBar.open('Paiement soumis. Veuillez vérifier votre email pour le code de vérification.', 'OK', { duration: 5000 });
         this.currentStep = 4;
         this.isLoading = false;
         this.cdr.detectChanges();
       },
-      error: (err: HttpErrorResponse) => {
-        console.error('Error:', JSON.stringify(err, null, 2));
+      error: (err: any) => {
+        console.error('Payment error:', err);
         this.errorMessage = err.error?.message || 'Erreur lors du traitement du paiement';
         this.snackBar.open(this.errorMessage, 'OK', { duration: 6000 });
         this.isLoading = false;
@@ -625,88 +635,91 @@ export class ReservationsComponent implements OnInit {
     });
   }
 
-  confirmPayment(): void {
-    this.isLoading = true;
-    this.errorMessage = '';
+ confirmPayment(): void {
+  this.isLoading = true;
+  this.errorMessage = '';
 
-    const reservationId = this.reservationId || '0';
-    const paymentVerificationCode = this.reservationForm.get('paymentVerificationCode')?.value || '';
+  const reservationId = this.reservationId?.toString() || '';
+  const paymentVerificationCode = this.reservationForm.get('paymentVerificationCode')?.value || '';
 
-    if (!paymentVerificationCode) {
-      this.snackBar.open('Le code de vérification est requis.', 'OK', { duration: 6000 });
-      this.isLoading = false;
-      this.cdr.detectChanges();
-      return;
-    }
-
-    const params = new HttpParams()
-      .set('reservationId', reservationId)
-      .set('paymentVerificationCode', paymentVerificationCode);
-
-    this.http.post(`${this.apiUrl}/confirmPayment`, null, {
-      headers: this.getAuthHeaders(),
-      params
-    }).subscribe({
-      next: (response: any) => {
-        this.reservationId = response.reservationId || this.reservationId;
-        this.isReservationConfirmed = true;
-        this.qrCodeString = this.reservationId;
-        setTimeout(() => this.generateQrCode(), 100);
-        this.currentStep = 4;
-        this.snackBar.open('Réservation confirmée avec succès.', 'OK', { duration: 5000 });
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      },
-      error: (err: HttpErrorResponse) => {
-        console.error('Error:', JSON.stringify(err, null, 2));
-        this.errorMessage = err.error?.message || 'Erreur lors de la confirmation du paiement.';
-        this.snackBar.open(this.errorMessage, 'OK', { duration: 6000 });
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      }
-    });
+  if (!paymentVerificationCode) {
+    this.snackBar.open('Le code de vérification est requis.', 'OK', { duration: 6000 });
+    this.isLoading = false;
+    this.cdr.detectChanges();
+    return;
   }
 
-  verifyReservation(): void {
-    this.isLoading = true;
-    this.errorMessage = '';
+  const params = new HttpParams()
+    .set('reservationId', reservationId)
+    .set('paymentVerificationCode', paymentVerificationCode);
 
-    const reservationId = this.reservationId || '0';
-    const confirmationCode = this.reservationForm.get('reservationConfirmationCode')?.value || '';
-
-    if (!confirmationCode) {
-      this.snackBar.open('Le code de confirmation est requis.', 'OK', { duration: 6000 });
+  this.http.post(`${this.apiUrl}/confirmPayment`, null, {
+    headers: this.getAuthHeaders(),
+    params
+  }).subscribe({
+    next: (response: any) => {
+      this.reservationId = response.reservationId ? parseInt(response.reservationId) : this.reservationId;
+      this.isReservationConfirmed = true;
+      // Fix: Convert undefined to null to match the type string | null
+      this.qrCodeString = this.reservationId?.toString() ?? null;
+      setTimeout(() => this.generateQrCode(), 100);
+      this.currentStep = 4;
+      this.snackBar.open('Réservation confirmée avec succès.', 'OK', { duration: 5000 });
       this.isLoading = false;
       this.cdr.detectChanges();
-      return;
+    },
+    error: (err: any) => {
+      console.error('Payment confirmation error:', err);
+      this.errorMessage = err.error?.message || 'Erreur lors de la confirmation du paiement.';
+      this.snackBar.open(this.errorMessage, 'OK', { duration: 6000 });
+      this.isLoading = false;
+      this.cdr.detectChanges();
     }
+  });
+}
 
-    const params = new HttpParams()
-      .set('reservationId', reservationId)
-      .set('reservationConfirmationCode', confirmationCode);
+verifyReservation(): void {
+  this.isLoading = true;
+  this.errorMessage = '';
 
-    this.http.post(`${this.apiUrl}/confirmReservation`, null, {
-      headers: this.getAuthHeaders(),
-      params
-    }).subscribe({
-      next: () => {
-        this.isReservationConfirmed = true;
-        this.qrCodeString = this.reservationId;
-        setTimeout(() => this.generateQrCode(), 100);
-        this.currentStep = 4;
-        this.snackBar.open('Réservation confirmée.', 'OK', { duration: 5000 });
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      },
-      error: (err: HttpErrorResponse) => {
-        console.error('Error:', JSON.stringify(err, null, 2));
-        this.errorMessage = err.error?.message || 'Erreur lors de la confirmation';
-        this.snackBar.open(this.errorMessage, 'OK', { duration: 6000 });
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      }
-    });
+  const reservationId = this.reservationId ? `RES-${this.reservationId}` : ''; // Prepend "RES-"
+  const confirmationCode = this.reservationForm.get('reservationConfirmationCode')?.value || '';
+
+  if (!confirmationCode) {
+    this.snackBar.open('Le code de confirmation est requis.', 'OK', { duration: 6000 });
+    this.isLoading = false;
+    this.cdr.detectChanges();
+    return;
   }
+
+  const params = new HttpParams()
+    .set('reservationId', reservationId)
+    .set('reservationConfirmationCode', confirmationCode);
+
+  this.http.post(`${this.apiUrl}/confirmReservation`, null, {
+    headers: this.getAuthHeaders(),
+    params
+  }).subscribe({
+    next: () => {
+      this.isReservationConfirmed = true;
+      this.qrCodeString = reservationId; // Use the formatted ID for QR code
+      setTimeout(() => this.generateQrCode(), 100);
+      this.currentStep = 4;
+      this.snackBar.open('Réservation confirmée.', 'OK', { duration: 5000 });
+      this.isLoading = false;
+      this.cdr.detectChanges();
+    },
+    error: (err: any) => {
+      console.error('Reservation confirmation error:', JSON.stringify(err.error, null, 2));
+      this.errorMessage = err.error?.message || 'Erreur lors de la confirmation';
+      this.snackBar.open(this.errorMessage, 'OK', { duration: 6000 });
+      this.isLoading = false;
+      this.cdr.detectChanges();
+    }
+  });
+}
+
+ 
 
   resendConfirmationEmail(): void {
     if (!this.reservationId) {
@@ -718,7 +731,7 @@ export class ReservationsComponent implements OnInit {
     this.errorMessage = '';
 
     const params = new HttpParams()
-      .set('reservationId', this.reservationId);
+      .set('reservationId', this.reservationId.toString());
 
     this.http.post(`${this.apiUrl}/resendConfirmation`, null, {
       headers: this.getAuthHeaders(),
@@ -729,8 +742,8 @@ export class ReservationsComponent implements OnInit {
         this.isLoading = false;
         this.cdr.detectChanges();
       },
-      error: (err: HttpErrorResponse) => {
-        console.error('Error:', JSON.stringify(err, null, 2));
+      error: (err: any) => {
+        console.error('Resend email error:', err);
         this.errorMessage = err.error?.message || 'Erreur lors du renvoi de l\'email';
         this.snackBar.open(this.errorMessage, 'OK', { duration: 6000 });
         this.isLoading = false;
@@ -777,7 +790,7 @@ export class ReservationsComponent implements OnInit {
           this.cdr.detectChanges();
         })
         .catch(err => {
-          console.error('Error:', err);
+          console.error('QR code generation error:', err);
           this.errorMessage = 'Erreur lors de la génération du QR code.';
           this.snackBar.open(this.errorMessage, 'OK', { duration: 6000 });
           this.cdr.detectChanges();
