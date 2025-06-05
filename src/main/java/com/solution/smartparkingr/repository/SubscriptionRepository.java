@@ -22,4 +22,10 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
 
     @Query("SELECT s FROM Subscription s WHERE s.endDate BETWEEN :start AND :end AND s.status = 'ACTIVE'")
     List<Subscription> findExpiringSubscriptions(LocalDateTime start, LocalDateTime end);
+
+    List<Subscription> findByUserIdAndStartDateBetween(Long userId, LocalDate start, LocalDate end);
+
+    // Add this method to check existence
+    boolean existsByUserIdAndStatus(Long userId, SubscriptionStatus status);
+    List<Subscription> findByUserId(Long userId);
 }

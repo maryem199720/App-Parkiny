@@ -20,7 +20,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOrigins("http://10.0.2.2:8082", "http://localhost:4200") // Adjust for Flutter
+                .setAllowedOriginPatterns("*") // Use patterns for flexibility and security
                 .withSockJS();
     }
 }

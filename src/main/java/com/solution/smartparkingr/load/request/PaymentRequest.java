@@ -1,6 +1,5 @@
 package com.solution.smartparkingr.load.request;
 
-import com.solution.smartparkingr.model.PaymentMethod;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
@@ -15,7 +14,7 @@ public class PaymentRequest {
     private Double amount;
 
     @NotNull(message = "Payment method is required")
-    private PaymentMethod paymentMethod;
+    private String paymentMethod;
 
     @NotBlank(message = "Payment reference is required")
     private String paymentReference;

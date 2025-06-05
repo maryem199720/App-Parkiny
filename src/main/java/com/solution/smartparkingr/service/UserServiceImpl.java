@@ -160,8 +160,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void changePassword(String currentPassword, String newPassword, String verificationCode) {
-        logger.debug("Changing password for current user");
+    public void requestChangePasswordCode(String currentPassword, String newPassword) {
+        logger.debug("Requesting change password code for current user");
         User user = getCurrentUser();
 
         // Verify current password
@@ -170,20 +170,62 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("Current password is incorrect");
         }
 
-        // Verify the code
-        String storedCode = verificationCodeStore.getCode(user.getEmail());
-        if (storedCode == null || !storedCode.equals(verificationCode)) {
-            logger.error("Invalid verification code for user: {}", user.getEmail());
+        // Generate a 6-digit verification code
+        String verificationCode = String.format("%06d", new Random().nextInt(999999));
+
+        try {
+            logger.debug("Sending verification code to email: {}", user.getEmail());
+            emailService.sendPasswordResetEmail(user.getEmail(), verificationCode);
+            // Store the code and new password together
+            verificationCodeStore.storeCodeWithPassword(user.getEmail(), verificationCode, newPassword);
+            logger.debug("Verification code stored for user: {}", user.getEmail());
+        } catch (IOException e) {
+            logger.error("Failed to send verification code for user: {} due to: {}", user.getEmail(), e.getMessage());
+            throw new RuntimeException("Failed to send verification code: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void changePassword(String currentPassword, String newPassword, String verificationCode) {
+        logger.debug("Changing password for current user");
+        User user = getCurrentUser();
+        String userEmail = user.getEmail();
+
+        // Retrieve stored code and new password
+        VerificationCodeStore.VerificationData verificationData = verificationCodeStore.getVerificationData(userEmail);
+        if (verificationData == null || !verificationData.getCode().equals(verificationCode)) {
+            logger.error("Invalid verification code for user: {}", userEmail);
             throw new RuntimeException("Invalid verification code");
+        }
+
+        // For forgot password flow, currentPassword might be null
+        if (currentPassword != null) {
+            // Validate current password
+            if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+                logger.error("Current password is incorrect for user: {}", userEmail);
+                throw new RuntimeException("Current password is incorrect");
+            }
+            // Use the stored new password from the verification data
+            newPassword = verificationData.getNewPassword();
+            if (newPassword == null) {
+                logger.error("No new password stored for user: {}", userEmail);
+                throw new RuntimeException("New password not found in verification data");
+            }
+        } else {
+            // Forgot password flow: use the newPassword from the request
+            if (newPassword == null) {
+                logger.error("New password is required for forgot password flow for user: {}", userEmail);
+                throw new RuntimeException("New password is required");
+            }
         }
 
         // Update password
         user.setPassword(passwordEncoder.encode(newPassword));
-        logger.debug("Password updated successfully for user: {}", user.getEmail());
+        logger.debug("Password updated successfully for user: {}", userEmail);
         userRepository.save(user);
 
         // Remove the verification code after successful use
-        verificationCodeStore.removeCode(user.getEmail());
+        verificationCodeStore.removeCode(userEmail);
     }
 
     @Override
@@ -193,7 +235,7 @@ public class UserServiceImpl implements UserService {
         // Validate input based on method
         User user = userRepository.findByEmailWithAllData(email)
                 .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
-        if (!user.getPhone().equals(phone)) {
+        if (phone != null && !user.getPhone().equals(phone)) {
             logger.error("Phone number does not match user: {}", email);
             throw new RuntimeException("Phone number does not match user");
         }
@@ -205,7 +247,7 @@ public class UserServiceImpl implements UserService {
             if ("email".equalsIgnoreCase(method)) {
                 logger.debug("Sending password reset email to: {}", email);
                 emailService.sendPasswordResetEmail(email, verificationCode);
-                verificationCodeStore.storeCode(email, verificationCode);
+                verificationCodeStore.storeCodeWithPassword(email, verificationCode, null); // No new password yet
             } else if ("sms".equalsIgnoreCase(method)) {
                 logger.warn("SMS verification is not implemented yet for user: {}", email);
                 throw new UnsupportedOperationException("SMS verification is not implemented yet");

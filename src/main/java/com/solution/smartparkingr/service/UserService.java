@@ -18,6 +18,7 @@ public interface UserService {
     boolean existsByPhone(String phone);
     User getCurrentUser();
     User updateUserProfile(UserProfileUpdateRequest updateRequest);
+    void requestChangePasswordCode(String currentPassword, String newPassword); // New method
     void changePassword(String currentPassword, String newPassword, String verificationCode);
     void requestPasswordReset(String method, String email, String phone);
     void cancelReservation(Long reservationId);

@@ -21,7 +21,7 @@ public class ReservationRequest {
     private Long parkingPlaceId;
 
     @NotBlank(message = "Matricule is required")
-    @Pattern(regexp = "[A-Z0-9]{3,10}", message = "Invalid matricule format")
+    @Pattern(regexp = "^[A-Z0-9\\s\\u0600-\\u06FF]{3,15}$", message = "Invalid matricule format. Use 3 to 15 characters (letters, numbers, spaces, or Arabic characters).")
     private String matricule;
 
     @NotNull(message = "Start time is required")
@@ -36,13 +36,23 @@ public class ReservationRequest {
     private String vehicleType;
 
     @NotNull(message = "Payment method is required")
-    private PaymentMethod paymentMethod;
+    private String paymentMethod;
 
     private String specialRequest;
 
     @NotBlank(message = "Email is required")
-    @Pattern(regexp = "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", message = "Invalid email format")
+    @Email(message = "Invalid email format")
     private String email;
 
     private Long subscriptionId; // Optional, null for non-subscribed users
+
+    // Normalize matricule before validation
+    public void setMatricule(String matricule) {
+        if (matricule != null) {
+            // Trim whitespace and normalize spaces
+            this.matricule = matricule.trim().replaceAll("\\s+", " ");
+        } else {
+            this.matricule = null;
+        }
+    }
 }

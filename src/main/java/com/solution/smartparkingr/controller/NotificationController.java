@@ -1,8 +1,8 @@
 package com.solution.smartparkingr.controller;
 
 import com.solution.smartparkingr.model.Notification;
-import com.solution.smartparkingr.repository.NotificationRepository;
 import com.solution.smartparkingr.security.services.UserDetailsImpl;
+import com.solution.smartparkingr.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -16,7 +16,10 @@ import java.util.List;
 public class NotificationController {
 
     @Autowired
-    private NotificationRepository notificationRepository;
+    private NotificationService notificationService;
+
+    @Autowired
+    private com.solution.smartparkingr.repository.NotificationRepository notificationRepository;
 
     @GetMapping
     public List<Notification> getNotifications() {

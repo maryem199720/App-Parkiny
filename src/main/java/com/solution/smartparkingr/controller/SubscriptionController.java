@@ -1,13 +1,7 @@
 package com.solution.smartparkingr.controller;
 
 import com.solution.smartparkingr.load.request.SubscriptionRequest;
-import com.solution.smartparkingr.model.Subscription;
-import com.solution.smartparkingr.model.SubscriptionPlan;
-import com.solution.smartparkingr.model.User;
-import com.solution.smartparkingr.model.Role;
-import com.solution.smartparkingr.model.ERole;
-import com.solution.smartparkingr.model.Payment;
-import com.solution.smartparkingr.model.SubscriptionStatus;
+import com.solution.smartparkingr.model.*;
 import com.solution.smartparkingr.repository.SubscriptionPlanRepository;
 import com.solution.smartparkingr.repository.SubscriptionRepository;
 import com.solution.smartparkingr.repository.UserRepository;
@@ -22,9 +16,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +30,7 @@ import java.util.Optional;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
@@ -129,9 +128,22 @@ public class SubscriptionController {
         userRepository.save(newUser);
         return ResponseEntity.ok(Map.of("message", "Admin registered successfully"));
     }
-
     @PostMapping("/subscribe")
-    public ResponseEntity<?> subscribe(@Valid @RequestBody SubscriptionRequest request) {
+    public ResponseEntity<?> subscribe(@Valid @RequestBody SubscriptionRequest request, BindingResult result) {
+        if (result.hasErrors()) {
+            Map<String, String> errors = result.getFieldErrors().stream()
+                    .collect(Collectors.toMap(
+                            FieldError::getField,
+                            FieldError::getDefaultMessage,
+                            (existing, replacement) -> existing
+                    ));
+            return ResponseEntity.badRequest().body(Map.of("message", "Validation failed", "errors", errors));
+        }
+
+        if (!"CARTE_BANCAIRE".equalsIgnoreCase(request.getPaymentMethod())) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Only CARTE_BANCAIRE is supported for subscription creation"));
+        }
+
         Long userId;
         try {
             userId = Long.parseLong(request.getUserId());
@@ -153,10 +165,9 @@ public class SubscriptionController {
         double amount = request.getAmount() != null ? request.getAmount() :
                 "monthly".equalsIgnoreCase(request.getBillingCycle()) ? plan.getMonthlyPrice() : plan.getMonthlyPrice() * 12 * 0.8;
 
-        // Validate card details (if applicable)
-        if ("CARTE_BANCAIRE".equalsIgnoreCase(request.getPaymentMethod().name())) {
+        if ("CARTE_BANCAIRE".equalsIgnoreCase(request.getPaymentMethod())) {
             if (request.getCardNumber() == null || request.getCardNumber().length() != 16 ||
-                    request.getExpiryDate() == null || !request.getExpiryDate().matches("^(0[1-9]|1[0-2])/[0-9]{2}$") ||
+                    request.getExpiryDate() == null || !request.getExpiryDate().matches("^(0[1-9]|1[0-2])/(?:[0-9]{2}|[0-9]{4})$") ||
                     request.getCvv() == null || request.getCvv().length() != 3 ||
                     request.getCardName() == null || request.getCardName().trim().isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("message", "Invalid card details"));
@@ -173,18 +184,16 @@ public class SubscriptionController {
         Payment payment = new Payment();
         payment.setSubscription(subscription);
         payment.setAmount(amount);
-        payment.setPaymentMethod(request.getPaymentMethod());
+        payment.setPaymentMethod(request.getPaymentMethodAsEnum()); // Use the converted enum
         payment.setPaymentStatus("PENDING");
         payment.setTransactionId(sessionId);
         payment.setPaymentDate(LocalDateTime.now());
         payment.setPaymentReference(request.getPaymentReference());
         paymentRepository.save(payment);
 
-        // Generate subscription confirmation code directly
         String subscriptionConfirmationCode = String.format("%06d", new Random().nextInt(999999));
         subscriptionService.storeSubscriptionConfirmationCode(sessionId, subscriptionConfirmationCode);
 
-        // Send confirmation email with the code
         Map<String, Object> emailDetails = new HashMap<>();
         emailDetails.put("subscriptionId", sessionId);
         emailDetails.put("subscriptionType", subscription.getSubscriptionType());
@@ -204,15 +213,20 @@ public class SubscriptionController {
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Abonnement initié. Veuillez vérifier votre email pour le code de confirmation.");
         response.put("session_id", sessionId);
-        response.put("paymentVerificationCode", subscriptionConfirmationCode); // Use subscriptionConfirmationCode
+        response.put("paymentVerificationCode", subscriptionConfirmationCode);
 
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/confirmSubscription")
-    public ResponseEntity<?> confirmSubscription(
-            @RequestParam String sessionId,
-            @RequestParam String subscriptionConfirmationCode) {
+    public ResponseEntity<?> confirmSubscription(@RequestBody Map<String, String> request) {
+        String sessionId = request.get("sessionId");
+        String subscriptionConfirmationCode = request.get("confirmationCode"); // Note: Match the frontend key
+
+        if (sessionId == null || subscriptionConfirmationCode == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Session ID and confirmation code are required"));
+        }
+
         Optional<Subscription> subscriptionOpt = subscriptionService.getActiveSubscriptionBySessionId(sessionId);
         if (subscriptionOpt.isEmpty()) {
             return ResponseEntity.badRequest().body("Abonnement introuvable");
@@ -264,6 +278,67 @@ public class SubscriptionController {
         return ResponseEntity.ok(Map.of("message", "Abonnement confirmé avec succès"));
     }
 
+    @GetMapping("/subscriptions/history")
+    public ResponseEntity<?> getSubscriptionHistory(
+            @RequestParam Long userId,
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Bad Request",
+                    "message", "User not found"
+            ));
+        }
+
+        List<Subscription> subscriptions = subscriptionRepository.findByUserId(userId);
+        if (subscriptions.isEmpty()) {
+            return ResponseEntity.ok(List.of()); // Return empty list if no subscriptions
+        }
+
+        // Filter to include only expired subscriptions
+        LocalDate today = LocalDate.now();
+        subscriptions = subscriptions.stream()
+                .filter(sub -> sub.getEndDate() != null && sub.getEndDate().isBefore(today)) // Expired if endDate is before today
+                .collect(Collectors.toList());
+
+        // Further filter by month and year if provided
+        if (month != null && year != null) {
+            subscriptions = subscriptions.stream()
+                    .filter(sub -> {
+                        LocalDate startDate = sub.getStartDate();
+                        return startDate != null && startDate.getMonthValue() == month && startDate.getYear() == year;
+                    })
+                    .collect(Collectors.toList());
+        }
+
+        // Map to client-expected format with standardized date format
+        List<Map<String, Object>> response = subscriptions.stream()
+                .map(sub -> {
+                    Map<String, Object> subMap = new HashMap<>();
+                    subMap.put("id", sub.getId());
+                    subMap.put("userId", sub.getUser().getId());
+                    subMap.put("subscriptionType", sub.getSubscriptionType());
+                    subMap.put("billingCycle", sub.getBillingCycle());
+                    subMap.put("status", sub.getStatus().name());
+                    subMap.put("remainingPlaces", sub.getRemainingPlaces());
+                    subMap.put("startDate", sub.getStartDate() != null ? sub.getStartDate().format(DateTimeFormatter.ISO_LOCAL_DATE) : null);
+                    subMap.put("endDate", sub.getEndDate() != null ? sub.getEndDate().format(DateTimeFormatter.ISO_LOCAL_DATE) : null);
+                    subMap.put("price", sub.getPrice());
+                    subMap.put("parkingDurationLimit", sub.getParkingDurationLimit());
+                    subMap.put("advanceReservationDays", sub.getAdvanceReservationDays());
+                    subMap.put("hasPremiumSpots", sub.getHasPremiumSpots());
+                    subMap.put("hasValetService", sub.getHasValetService());
+                    subMap.put("supportLevel", sub.getSupportLevel());
+                    subMap.put("paymentStatus", sub.getPaymentStatus());
+                    subMap.put("sessionId", sub.getSessionId());
+                    subMap.put("autoRenewal", sub.getAutoRenewal());
+                    return subMap;
+                })
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(response);
+    }
     @PostMapping("/subscription/callback")
     public ResponseEntity<?> handlePaymentCallback(
             @RequestParam String session,
@@ -305,6 +380,8 @@ public class SubscriptionController {
             response.put("billingCycle", subscription.getBillingCycle());
             response.put("status", subscription.getStatus().name());
             response.put("remainingPlaces", subscription.getRemainingPlaces());
+            response.put("startDate", subscription.getStartDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
+            response.put("endDate", subscription.getEndDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
             return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.status(404).body(Map.of(

@@ -1,12 +1,13 @@
 package com.solution.smartparkingr.load.request;
 
 import com.solution.smartparkingr.model.PaymentMethod;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
 @Data
 public class SubscriptionRequest {
-
     @NotBlank(message = "User ID is required")
     private String userId;
 
@@ -20,24 +21,29 @@ public class SubscriptionRequest {
     @Positive(message = "Amount must be positive")
     private Double amount;
 
-    @NotNull(message = "Payment method is required")
-    private PaymentMethod paymentMethod;
+    @NotBlank(message = "Payment method is required")
+    private String paymentMethod; // Change to String
 
     @NotBlank(message = "Payment reference is required")
     private String paymentReference;
 
-    @NotBlank(message = "Card number is required")
     private String cardNumber;
 
-    @NotBlank(message = "Expiry date is required")
     private String expiryDate;
 
-    @NotBlank(message = "CVV is required")
     private String cvv;
 
-    @NotBlank(message = "Card name is required")
     private String cardName;
 
     @NotBlank(message = "Email is required")
     private String email;
+
+    // Getter to convert string to enum
+    public PaymentMethod getPaymentMethodAsEnum() {
+        try {
+            return PaymentMethod.valueOf(paymentMethod.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid payment method: " + paymentMethod);
+        }
+    }
 }

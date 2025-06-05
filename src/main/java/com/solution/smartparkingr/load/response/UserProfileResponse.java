@@ -5,17 +5,46 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class UserProfileResponse {
-
     private Long id;
     private String firstName;
     private String lastName;
     private String email;
     private String phone;
     private List<VehicleInfo> vehicles;
-    private SubscriptionInfo subscription;
+    private List<SubscriptionInfo> subscriptions; // Subscription history
     private List<ReservationInfo> reservationHistory;
 
-    // Nested DTO for vehicle information
+    public UserProfileResponse(Long id, String firstName, String lastName, String email, String phone,
+                               List<VehicleInfo> vehicles, List<SubscriptionInfo> subscriptions,
+                               List<ReservationInfo> reservationHistory) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.phone = phone;
+        this.vehicles = vehicles;
+        this.subscriptions = subscriptions;
+        this.reservationHistory = reservationHistory;
+    }
+
+    // Getters and setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+    public List<VehicleInfo> getVehicles() { return vehicles; }
+    public void setVehicles(List<VehicleInfo> vehicles) { this.vehicles = vehicles; }
+    public List<SubscriptionInfo> getSubscriptions() { return subscriptions; }
+    public void setSubscriptions(List<SubscriptionInfo> subscriptions) { this.subscriptions = subscriptions; }
+    public List<ReservationInfo> getReservationHistory() { return reservationHistory; }
+    public void setReservationHistory(List<ReservationInfo> reservationHistory) { this.reservationHistory = reservationHistory; }
+
     public static class VehicleInfo {
         private Long id;
         private String matricule;
@@ -35,55 +64,42 @@ public class UserProfileResponse {
             this.matriculeImageUrl = matriculeImageUrl;
         }
 
-        public Long getId() {
-            return id;
-        }
-
-        public String getMatricule() {
-            return matricule;
-        }
-
-        public String getVehicleType() {
-            return vehicleType;
-        }
-
-        public String getBrand() {
-            return brand;
-        }
-
-        public String getModel() {
-            return model;
-        }
-
-        public String getColor() {
-            return color;
-        }
-
-        public String getMatriculeImageUrl() {
-            return matriculeImageUrl;
-        }
+        // Getters
+        public Long getId() { return id; }
+        public String getMatricule() { return matricule; }
+        public String getVehicleType() { return vehicleType; }
+        public String getBrand() { return brand; }
+        public String getModel() { return model; }
+        public String getColor() { return color; }
+        public String getMatriculeImageUrl() { return matriculeImageUrl; }
     }
 
-    // Nested DTO for subscription information (simplified for badge)
     public static class SubscriptionInfo {
-        private boolean hasSubscription;
-        private LocalDate subscriptionEndDate;
+        private Long id;
+        private String type;
+        private String billingCycle;
+        private LocalDate startDate; // Changed from LocalDateTime to LocalDate
+        private LocalDate endDate;   // Changed from LocalDateTime to LocalDate
+        private String status;
 
-        public SubscriptionInfo(boolean hasSubscription, LocalDate subscriptionEndDate) {
-            this.hasSubscription = hasSubscription;
-            this.subscriptionEndDate = subscriptionEndDate;
+        public SubscriptionInfo(Long id, String type, String billingCycle, LocalDate startDate, LocalDate endDate, String status) {
+            this.id = id;
+            this.type = type;
+            this.billingCycle = billingCycle;
+            this.startDate = startDate;
+            this.endDate = endDate;
+            this.status = status;
         }
 
-        public boolean isHasSubscription() {
-            return hasSubscription;
-        }
-
-        public LocalDate getSubscriptionEndDate() {
-            return subscriptionEndDate;
-        }
+        // Getters
+        public Long getId() { return id; }
+        public String getType() { return type; }
+        public String getBillingCycle() { return billingCycle; }
+        public LocalDate getStartDate() { return startDate; }
+        public LocalDate getEndDate() { return endDate; }
+        public String getStatus() { return status; }
     }
 
-    // Nested DTO for reservation information
     public static class ReservationInfo {
         private Long parkingSpotId;
         private Long vehicleId;
@@ -93,7 +109,8 @@ public class UserProfileResponse {
         private Double totalCost;
         private LocalDateTime createdAt;
 
-        public ReservationInfo(Long parkingSpotId, Long vehicleId, LocalDateTime startTime, LocalDateTime endTime, String status, Double totalCost, LocalDateTime createdAt) {
+        public ReservationInfo(Long parkingSpotId, Long vehicleId, LocalDateTime startTime, LocalDateTime endTime,
+                               String status, Double totalCost, LocalDateTime createdAt) {
             this.parkingSpotId = parkingSpotId;
             this.vehicleId = vehicleId;
             this.startTime = startTime;
@@ -103,78 +120,13 @@ public class UserProfileResponse {
             this.createdAt = createdAt;
         }
 
-        public Long getParkingSpotId() {
-            return parkingSpotId;
-        }
-
-        public Long getVehicleId() {
-            return vehicleId;
-        }
-
-        public LocalDateTime getStartTime() {
-            return startTime;
-        }
-
-        public LocalDateTime getEndTime() {
-            return endTime;
-        }
-
-        public String getStatus() {
-            return status;
-        }
-
-        public Double getTotalCost() {
-            return totalCost;
-        }
-
-        public LocalDateTime getCreatedAt() {
-            return createdAt;
-        }
-    }
-
-    // Constructor
-    public UserProfileResponse(Long id, String firstName, String lastName, String email, String phone,
-                               List<VehicleInfo> vehicles, SubscriptionInfo subscription, List<ReservationInfo> reservationHistory) {
-        this.id = id;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-        this.phone = phone;
-        this.vehicles = vehicles;
-        this.subscription = subscription;
-        this.reservationHistory = reservationHistory;
-    }
-
-    // Getters
-    public Long getId() {
-        return id;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public List<VehicleInfo> getVehicles() {
-        return vehicles;
-    }
-
-    public SubscriptionInfo getSubscription() {
-        return subscription;
-    }
-
-    public List<ReservationInfo> getReservationHistory() {
-        return reservationHistory;
+        // Getters
+        public Long getParkingSpotId() { return parkingSpotId; }
+        public Long getVehicleId() { return vehicleId; }
+        public LocalDateTime getStartTime() { return startTime; }
+        public LocalDateTime getEndTime() { return endTime; }
+        public String getStatus() { return status; }
+        public Double getTotalCost() { return totalCost; }
+        public LocalDateTime getCreatedAt() { return createdAt; }
     }
 }

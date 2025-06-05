@@ -7,11 +7,9 @@ public class PasswordResetRequest {
     @NotBlank(message = "Method is required")
     private String method; // "email" or "sms"
 
-    @NotBlank(message = "Email is required if method is email")
-    private String email;
+    private String email; // Optional, required if method is email
 
-    @NotBlank(message = "Phone is required if method is sms")
-    private String phone;
+    private String phone; // Optional, required if method is sms
 
     // Getters and Setters
     public String getMethod() {
