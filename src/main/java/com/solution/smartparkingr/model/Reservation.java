@@ -5,6 +5,7 @@ import lombok.Data;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
 @Data
 public class Reservation {
 
+    public static com.solution.smartparkingr.model.ReservationStatus ReservationStatus;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

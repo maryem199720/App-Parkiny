@@ -75,7 +75,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/api/createReservation").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/subscription-plans").permitAll()
                         .requestMatchers("/api/subscribe", "/api/subscription/**", "/api/subscriptions/active").permitAll()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN") // Updated
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(unauthorizedHandler))
@@ -110,7 +110,7 @@ public class WebSecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://10.0.2.2:8082", "http://localhost:4200")); // Add Flutter origin if needed
+        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

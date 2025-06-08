@@ -1,46 +1,40 @@
 package com.solution.smartparkingr.controller;
 
 import com.solution.smartparkingr.model.Notification;
-import com.solution.smartparkingr.security.services.UserDetailsImpl;
-import com.solution.smartparkingr.service.NotificationService;
+import com.solution.smartparkingr.repository.NotificationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/api/notifications")
+@RequestMapping("/api/admin")
 public class NotificationController {
 
     @Autowired
-    private NotificationService notificationService;
+    private NotificationRepository notificationRepository;
 
-    @Autowired
-    private com.solution.smartparkingr.repository.NotificationRepository notificationRepository;
-
-    @GetMapping
+    @GetMapping("/notifications")
     public List<Notification> getNotifications() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        Long userId = userDetails.getId();
-        return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        List<Notification> notifications = notificationRepository.findAll();
+        notifications.sort(Comparator.comparing(Notification::getTimestamp, Comparator.reverseOrder()));
+        return notifications;
     }
 
-    @PostMapping("/{id}/read")
-    public ResponseEntity<?> markAsRead(@PathVariable Long id) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        Long userId = userDetails.getId();
+    @PostMapping(value = "/notifications/{id}/mark-as-read", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Map<String, String>> markAsRead(@PathVariable Long id) {
         Notification notification = notificationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Notification not found"));
-        if (!notification.getUserId().equals(userId)) {
-            return ResponseEntity.status(403).body("Unauthorized");
-        }
-        notification.setRead(true);
+                .orElseThrow(() -> new RuntimeException("Notification not found with ID: " + id));
+        notification.setIsRead(true);
         notificationRepository.save(notification);
-        return ResponseEntity.ok("Notification marked as read");
+
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Notification marquée comme lue");
+        return ResponseEntity.ok(response);
     }
 }

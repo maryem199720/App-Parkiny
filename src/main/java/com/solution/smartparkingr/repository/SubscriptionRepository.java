@@ -28,4 +28,5 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     // Add this method to check existence
     boolean existsByUserIdAndStatus(Long userId, SubscriptionStatus status);
     List<Subscription> findByUserId(Long userId);
+    List<Subscription> findBySubscriptionType(String subscriptionType);
 }

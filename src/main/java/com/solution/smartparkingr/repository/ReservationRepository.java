@@ -44,4 +44,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     @Query("SELECT COUNT(r) FROM Reservation r WHERE r.user.id = :userId " +
             "AND r.startTime BETWEEN :start AND :end")
     long countUserReservationsInMonth(@Param("userId") Long userId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+    List<Reservation> findByStartTimeBetween(LocalDateTime start, LocalDateTime end);
+
+    List<Reservation> findByStatusNotIn(List<ReservationStatus> statuses);
 }
