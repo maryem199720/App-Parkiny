@@ -1,17 +1,132 @@
-<!-- admin-dashboard.component.html -->
-<div class="dashboard-container">
-  <nav mat-tab-nav-bar>
-    <!-- Utilisez la syntaxe de tableau pour les routes imbriquées -->
-    <a mat-tab-link 
-       *ngFor="let link of navLinks" 
-       [routerLink]="['/admin-dashboard', link.path]"
-       routerLinkActive="active-link">
-      {{ link.label }}
-    </a>
-  </nav>
-  
-  <div class="content">
-    <!-- router-outlet doit être présent pour les enfants -->
-    <router-outlet></router-outlet>
+<div class="flex h-screen transition-colors duration-300 font-display">
+  <!-- Toast Notification -->
+  <ng-container *ngIf="errorMessage" class="fixed top-4 right-4 z-50 animate-bounce">
+    <div class="bg-red-500 text-white px-4 py-2 rounded-lg shadow-md flex items-center">
+      <i class="ri-error-warning-line w-5 h-5 mr-2"></i>
+      <span>{{ errorMessage }}</span>
+    </div>
+  </ng-container>
+
+  <!-- Sidebar -->
+  <div class="flex flex-col w-64 bg-dark-purple text-gold-200 shadow-lg transition-all duration-300">
+    <div class="bg-primary-purple p-4 flex items-center justify-between border-b border-gold-500">
+      <span class="text-2xl font-bold text-gold-500">Smart Park</span>
+      <button (click)="toggleSidebar()" class="text-gold-200 hover:text-gold-400" aria-label="Basculer la barre latérale">
+        <i class="ri-close-line w-6 h-6" *ngIf="sidebarOpen"></i>
+        <i class="ri-menu-line w-6 h-6" *ngIf="!sidebarOpen"></i>
+      </button>
+    </div>
+    <nav class="flex-1 overflow-auto">
+      <ul class="space-y-2 p-4">
+        <li>
+          <a routerLink="analytics" routerLinkActive="bg-primary-purple" class="flex items-center p-3 rounded-lg hover:bg-primary-purple transition-colors text-gold-200 hover:text-gold-400" aria-label="Analytique">
+            <i class="ri-bar-chart-line w-6 h-6 mr-3"></i>
+            <span>Analytique</span>
+          </a>
+        </li>
+        <li>
+          <a routerLink="user-management" routerLinkActive="bg-primary-purple" class="flex items-center p-3 rounded-lg hover:bg-primary-purple transition-colors text-gold-200 hover:text-gold-400" aria-label="Gestion Utilisateurs">
+            <i class="ri-user-line w-6 h-6 mr-3"></i>
+            <span>Gestion Utilisateurs</span>
+          </a>
+        </li>
+        <li>
+          <a routerLink="parking-settings" routerLinkActive="bg-primary-purple" class="flex items-center p-3 rounded-lg hover:bg-primary-purple transition-colors text-gold-200 hover:text-gold-400" aria-label="Paramètres Parking">
+            <i class="ri-settings-line w-6 h-6 mr-3"></i>
+            <span>Paramètres Parking</span>
+          </a>
+        </li>
+        <li class="mt-4">
+          <div class="flex items-center p-3 rounded-lg hover:bg-primary-purple transition-colors cursor-pointer text-gold-200 hover:text-gold-400" (click)="toggleNotifications()" role="button" aria-label="Afficher les notifications">
+            <i class="ri-notification-line w-6 h-6 mr-3"></i>
+            <span class="flex items-center">
+              Notifications
+              <span *ngIf="unreadCount > 0" class="ml-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">{{ unreadCount }}</span>
+            </span>
+          </div>
+        </li>
+        <li class="mt-4">
+          <div class="flex items-center p-3 rounded-lg hover:bg-primary-purple transition-colors cursor-pointer text-gold-200 hover:text-gold-400" (click)="toggleProfile()" role="button" aria-label="Gérer le profil">
+            <i class="ri-user-settings-line w-6 h-6 mr-3"></i>
+            <span class="flex items-center">
+              Profil
+              <span *ngIf="isEditingProfile" class="ml-2 text-xs bg-yellow-500 text-white rounded-full h-4 w-4 flex items-center justify-center">!</span>
+            </span>
+          </div>
+          <div *ngIf="showProfile" class="profile-section bg-dark-purple p-4 rounded mt-2 text-sm">
+            <div *ngIf="!isEditingProfile" class="profile-view text-gold-200">
+              <p><strong>Email:</strong> {{ adminProfile.email }}</p>
+              <p><strong>Mot de passe:</strong> *******</p>
+              <button (click)="toggleEditProfile()" class="text-gold-400 hover:text-gold-600 mt-2 w-full text-center py-1 rounded-lg" aria-label="Modifier le profil">Modifier</button>
+            </div>
+            <div *ngIf="isEditingProfile" class="profile-edit">
+              <div class="mb-4">
+                <label class="block text-gold-200 mb-1" for="email">Email</label>
+                <input id="email" [(ngModel)]="editedProfile.email" type="email" placeholder="Email" class="w-full p-2 rounded bg-gray-700 text-white border-gray-600 focus:ring-2 focus:ring-gold-500 transition-all" required aria-describedby="email-error" />
+                <div *ngIf="editedProfile.email && !isValidEmail(editedProfile.email)" class="text-red-500 text-xs mt-1" id="email-error">Veuillez entrer un email valide.</div>
+              </div>
+              <div class="mb-4">
+                <label class="block text-gold-200 mb-1" for="currentPassword">Mot de passe actuel</label>
+                <input id="currentPassword" [(ngModel)]="currentPassword" type="password" placeholder="Mot de passe actuel" class="w-full p-2 rounded bg-gray-700 text-white border-gray-600 focus:ring-2 focus:ring-gold-500 transition-all" aria-describedby="currentPassword-error" />
+              </div>
+              <div class="mb-4">
+                <label class="block text-gold-200 mb-1" for="newPassword">Nouveau mot de passe</label>
+                <input id="newPassword" [(ngModel)]="newPassword" type="password" placeholder="Nouveau mot de passe" class="w-full p-2 rounded bg-gray-700 text-white border-gray-600 focus:ring-2 focus:ring-gold-500 transition-all" aria-describedby="newPassword-error" />
+                <div *ngIf="newPassword && newPassword.length < 8" class="text-red-500 text-xs mt-1" id="newPassword-error">Le mot de passe doit contenir au moins 8 caractères.</div>
+              </div>
+              <button (click)="saveProfile()" class="bg-primary-purple text-white py-1 rounded w-full hover:bg-dark-purple animate-pulse mb-2" aria-label="Sauvegarder les modifications">Sauvegarder</button>
+              <button (click)="toggleEditProfile()" class="bg-gray-600 text-white py-1 rounded w-full hover:bg-gray-800" aria-label="Annuler les modifications">Annuler</button>
+            </div>
+          </div>
+        </li>
+        <li class="mt-4">
+          <div class="flex items-center p-3 rounded-lg hover:bg-primary-purple transition-colors cursor-pointer text-gold-200 hover:text-gold-400" (click)="logout()" role="button" aria-label="Se déconnecter">
+            <i class="ri-logout-box-line w-6 h-6 mr-3"></i>
+            <span>Déconnexion</span>
+          </div>
+        </li>
+      </ul>
+    </nav>
+  </div>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col">
+    <!-- Header -->
+    <header class="bg-dark-purple p-4 flex justify-between items-center">
+      <h1 class="text-2xl font-bold text-gold-200 font-display">Tableau de Bord Admin</h1>
+      <div class="flex items-center space-x-4">
+        <div class="relative">
+          <button (click)="toggleNotifications()" class="p-2 rounded-full hover:bg-primary-purple" aria-label="Afficher les notifications">
+            <i class="ri-notification-line w-6 h-6 text-gold-200"></i>
+            <span *ngIf="unreadCount" class="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center animate-pulse">{{ unreadCount }}</span>
+          </button>
+          <div *ngIf="showNotifications" @slideInOut class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl p-4 z-10 border border-gray-200" role="dialog" aria-label="Panneau des notifications">
+            <div class="flex justify-between items-center mb-3">
+              <h3 class="font-semibold text-lg text-dark-purple">Notifications</h3>
+              <button (click)="toggleNotifications()" class="text-gray-500 hover:text-gray-700" aria-label="Fermer le panneau des notifications">
+                <i class="ri-close-line w-5 h-5"></i>
+              </button>
+            </div>
+            <div class="max-h-96 overflow-y-auto space-y-3">
+              <div *ngFor="let notification of notifications" class="p-3 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-all duration-200" [ngClass]="{'border-gold-500 bg-gold-50 hover:bg-gold-100': !notification.is_read}" role="alert" [attr.aria-label]="notification.is_read ? 'Notification lue' : 'Notification non lue'">
+                <div class="flex items-start space-x-3">
+                  <i class="ri-information-line w-6 h-6 text-gold-500 flex-shrink-0 mt-1" [ngClass]="{'text-yellow-500': !notification.is_read}"></i>
+                  <div class="flex-1">
+                    <p class="font-medium" [ngClass]="{'text-yellow-700': !notification.is_read, 'text-dark-purple': notification.is_read}">{{ notification.message }}</p>
+                    <p class="text-sm text-gray-500">{{ formatDate(notification.timestamp) }}</p>
+                    <button *ngIf="!notification.is_read" (click)="markAsRead(notification.id)" class="mt-2 text-sm bg-primary-purple text-white px-3 py-1 rounded-full hover:bg-dark-purple transition animate-pulse" aria-label="Marquer comme lu">Marquer comme lu</button>
+                  </div>
+                </div>
+              </div>
+              <p *ngIf="notifications.length === 0" class="text-sm text-gray-500">Aucune notification pour le moment</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+    <!-- Content -->
+    <div class="flex-1 p-6 overflow-auto">
+      <router-outlet></router-outlet>
+    </div>
   </div>
 </div>

@@ -24,7 +24,8 @@
 }
 
 .progress-fill {
-  @apply h-full bg-gold rounded-full transition-all duration-300;
+  @apply h-full bg-gold-500 rounded-full transition-all duration-300;
+
 }
 
 .form-container {

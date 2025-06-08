@@ -1,57 +1,139 @@
-<div class="parking-settings-container">
-  <mat-card>
-    <mat-card-header>
-      <mat-card-title>Paramètres du Parking</mat-card-title>
-    </mat-card-header>
-    
-    <mat-card-content>
-      <!-- Début du formulaire -->
-      <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()">
-        
-        <!-- Champ Nombre de places -->
-        <mat-form-field appearance="outline">
-          <mat-label>Places totales</mat-label>
-          <input 
-            matInput 
-            type="number" 
-            formControlName="totalSpaces"
-            required
-          >
-          <mat-error *ngIf="settingsForm.get('totalSpaces')?.hasError('required')">
-            Champ obligatoire
-          </mat-error>
-          <mat-error *ngIf="settingsForm.get('totalSpaces')?.hasError('min')">
-            Minimum 1 place
-          </mat-error>
-        </mat-form-field>
+<div *ngIf="isLoading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-4 rounded-lg shadow-md animate-pulse">
+        <div class="text-dark-purple-600">Chargement...</div>
+    </div>
+</div>
 
-        <!-- Champ Tarif horaire -->
-        <mat-form-field appearance="outline">
-          <mat-label>Tarif horaire (€)</mat-label>
-          <input 
-            matInput 
-            type="number" 
-            formControlName="hourlyRate"
-            required
-          >
-          <mat-error *ngIf="settingsForm.get('hourlyRate')?.hasError('required')">
-            Champ obligatoire
-          </mat-error>
-          <mat-error *ngIf="settingsForm.get('hourlyRate')?.hasError('min')">
-            Valeur positive requise
-          </mat-error>
-        </mat-form-field>
+<div *ngIf="!isLoading" class="min-h-screen p-6 font-display bg-gray-100">
+    <div class="header mb-6">
+        <h1 class="text-3xl font-bold text-dark-purple-800">Paramètres du Parking</h1>
+    </div>
 
-        <!-- Bouton de soumission -->
-        <button 
-          mat-raised-button 
-          color="primary" 
-          type="submit"
-          [disabled]="settingsForm.invalid"
-        >
-          Sauvegarder
-        </button>
-      </form>
-    </mat-card-content>
-  </mat-card>
+    <div class="main-content space-y-6">
+        <!-- Section principale avec paramètres -->
+        <div class="settings-grid grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Paramètres de base -->
+            <div class="card settings-card bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-semibold text-dark-purple mb-4">Paramètres de Base</h2>
+                <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()">
+                    <div class="form-group mb-4">
+                        <label for="maxSlots" class="block text-gray-700">Nombre maximum de places</label>
+                        <input id="maxSlots" type="number" formControlName="maxSlots" class="w-full p-3 border rounded-lg bg-white text-gray-800 border-gray-300 focus:ring-2 focus:ring-yellow-500 transition-all">
+                        <span class="error text-red-500 text-sm mt-1" *ngIf="maxSlotsError">{{ maxSlotsError }}</span>
+                    </div>
+                    <div class="form-group mb-4">
+                        <label for="reservedPremiumSlots" class="block text-gray-700">Places réservées premium</label>
+                        <input id="reservedPremiumSlots" type="number" formControlName="reservedPremiumSlots" class="w-full p-3 border rounded-lg bg-white text-gray-800 border-gray-300 focus:ring-2 focus:ring-yellow-500 transition-all">
+                        <span class="error text-red-500 text-sm mt-1" *ngIf="reservedPremiumSlotsError">{{ reservedPremiumSlotsError }}</span>
+                    </div>
+                    <button type="submit" [disabled]="isLoading || !settingsForm.valid" class="mt-4 px-4 py-2 bg-yellow-500 text-white rounded-lg font-semibold hover:bg-yellow-600 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed">Sauvegarder</button>
+                </form>
+            </div>
+
+            <!-- Liste des offres -->
+            <div class="card offers-card bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-semibold text-dark-purple mb-4">Offres d'Abonnement</h2>
+                <form [formGroup]="settingsForm">
+                    <div formArrayName="subscriptionOffers" class="offers-list space-y-4">
+                        <div *ngFor="let offer of subscriptionOffers.controls; let i = index" [formGroupName]="i" class="offer-item flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                            <div class="offer-details text-gray-800">
+                                <span>{{ offer.get('name')?.value }} - {{ offer.get('price')?.value }} TND pour {{ offer.get('duration')?.value }} jours</span>
+                                <span *ngIf="offer.get('active')?.value" class="ml-2 text-green-500">Actif</span>
+                                <span *ngIf="!offer.get('active')?.value" class="ml-2 text-red-500">Inactif</span>
+                            </div>
+                            <div class="offer-actions flex gap-2">
+                                <button type="button" (click)="editOffer(i)" class="px-4 py-2 bg-yellow-500 text-white rounded-lg font-semibold hover:bg-yellow-600 transition-all">Modifier</button>
+                                <button type="button" (click)="deleteOffer(i)" class="px-4 py-2 bg-yellow-500 text-white rounded-lg font-semibold hover:bg-yellow-600 transition-all">Supprimer</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Section Ajout/Modification et Historique -->
+        <div class="secondary-content grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Ajout/Modification d'offre -->
+            <div class="card offer-form-card bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-semibold text-dark-purple mb-4">Ajouter ou Modifier une Offre</h2>
+                <form [formGroup]="offerForm" (ngSubmit)="selectedOfferIndex === null ? addOffer() : updateOffer()">
+                    <div class="form-group mb-4">
+                        <label for="offerName" class="block text-gray-700">Nom de l'offre</label>
+                        <input id="offerName" formControlName="name" class="w-full p-3 border rounded-lg bg-white text-gray-800 border-gray-300 focus:ring-2 focus:ring-yellow-500 transition-all">
+                        <span class="error text-red-500 text-sm mt-1" *ngIf="offerNameError">{{ offerNameError }}</span>
+                    </div>
+                    <div class="form-group mb-4">
+                        <label for="offerPrice" class="block text-gray-700">Prix (TND)</label>
+                        <input id="offerPrice" type="number" formControlName="price" class="w-full p-3 border rounded-lg bg-white text-gray-800 border-gray-300 focus:ring-2 focus:ring-yellow-500 transition-all">
+                        <span class="error text-red-500 text-sm mt-1" *ngIf="offerPriceError">{{ offerPriceError }}</span>
+                    </div>
+                    <div class="form-group mb-4">
+                        <label for="offerDuration" class="block text-gray-700">Durée (jours)</label>
+                        <input id="offerDuration" type="number" formControlName="duration" class="w-full p-3 border rounded-lg bg-white text-gray-800 border-gray-300 focus:ring-2 focus:ring-yellow-500 transition-all">
+                        <span class="error text-red-500 text-sm mt-1" *ngIf="offerDurationError">{{ offerDurationError }}</span>
+                    </div>
+                    <div class="form-group flex items-center space-x-2 mb-4">
+                        <input id="offerActive" type="checkbox" formControlName="active" class="h-5 w-5 text-primary-purple focus:ring-yellow-500">
+                        <label for="offerActive" class="text-gray-700">Actif</label>
+                    </div>
+                    <button type="submit" [disabled]="!offerForm.valid" class="mt-4 px-4 py-2 bg-yellow-500 text-white rounded-lg font-semibold hover:bg-yellow-600 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed">
+                        {{ selectedOfferIndex === null ? 'Ajouter' : 'Mettre à jour' }}
+                    </button>
+                </form>
+            </div>
+
+            <!-- Historique -->
+            <div class="card history-card bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-semibold text-dark-purple mb-4">Historique des Modifications</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-600">
+                                <th class="p-3 border-b">Date</th>
+                                <th class="p-3 border-b">Type de Modification</th>
+                                <th class="p-3 border-b">Détails</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let entry of settingsHistory" class="border-b hover:bg-gray-50 transition-all">
+                                <td class="p-3 text-gray-800">{{ entry.timestamp | date:'medium' }}</td>
+                                <td class="p-3 text-gray-800">
+                                    <span *ngIf="entry.changes.maxSlots || entry.changes.reservedPremiumSlots">Paramètres de Base</span>
+                                    <span *ngIf="entry.changes.subscriptionOffers">Offres d'Abonnement</span>
+                                </td>
+                                <td class="p-3 text-gray-800">
+                                    <ul class="list-disc pl-5">
+                                        <li *ngIf="entry.changes.maxSlots">Nombre maximum de places modifié : {{ entry.changes.maxSlots.old }} → {{ entry.changes.maxSlots.new }}</li>
+                                        <li *ngIf="entry.changes.reservedPremiumSlots">Places réservées premium modifiées : {{ entry.changes.reservedPremiumSlots.old }} → {{ entry.changes.reservedPremiumSlots.new }}</li>
+                                        <li *ngFor="let offerChange of entry.changes.subscriptionOffers">
+                                            <span *ngIf="offerChange.action === 'added' && offerChange.new">
+                                                Offre ajoutée : "{{ offerChange.new.name }}" ({{ offerChange.new.price }} TND, {{ offerChange.new.duration }} jours, {{ offerChange.new.active ? 'Actif' : 'Inactif' }})
+                                            </span>
+                                            <span *ngIf="offerChange.action === 'updated' && offerChange.old && offerChange.new">
+                                                Offre modifiée : "{{ offerChange.old.name }}"
+                                                <span *ngIf="offerChange.old.name !== offerChange.new.name"> → "{{ offerChange.new.name }}"</span>
+                                                (
+                                                <span *ngIf="offerChange.old.price !== offerChange.new.price">Prix : {{ offerChange.old.price }} TND → {{ offerChange.new.price }} TND, </span>
+                                                <span *ngIf="offerChange.old.duration !== offerChange.new.duration">Durée : {{ offerChange.old.duration }} jours → {{ offerChange.new.duration }} jours, </span>
+                                                <span *ngIf="offerChange.old.active !== offerChange.new.active">Statut : {{ offerChange.old.active ? 'Actif' : 'Inactif' }} → {{ offerChange.new.active ? 'Actif' : 'Inactif' }}, </span>
+                                                <span *ngIf="offerChange.old.subscribers !== offerChange.new.subscribers">Abonnés : {{ offerChange.old.subscribers }} → {{ offerChange.new.subscribers }}</span>
+                                                )
+                                            </span>
+                                            <span *ngIf="offerChange.action === 'deleted' && offerChange.old">
+                                                Offre supprimée : "{{ offerChange.old.name }}" ({{ offerChange.old.price }} TND, {{ offerChange.old.duration }} jours, {{ offerChange.old.active ? 'Actif' : 'Inactif' }})
+                                            </span>
+                                        </li>
+                                    </ul>
+                                    <span *ngIf="!entry.changes.maxSlots && !entry.changes.reservedPremiumSlots && !entry.changes.subscriptionOffers?.length">Aucune modification effectuée</span>
+                                </td>
+                            </tr>
+                            <tr *ngIf="!settingsHistory?.length" class="border-b">
+                                <td colspan="3" class="p-3 text-center text-gray-500">Aucun historique disponible.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

@@ -1,31 +1,64 @@
-<div class="analytics-container">
-    <mat-card>
-      <mat-card-title>Statistiques du Parking</mat-card-title>
-      <mat-card-content>
-        <div class="stats-grid">
-          <div class="stat">
-            <h3>Taux d'occupation</h3>
-            <p>{{ occupancyRate }}%</p>
-            <mat-progress-spinner
-              mode="determinate"
-              [value]="occupancyRate"
-              diameter="50">
-            </mat-progress-spinner>
-          </div>
-          <div class="stat">
-            <h3>Réservations totales</h3>
-            <p>{{ totalReservations }}</p>
-          </div>
-          <div class="stat">
-            <h3>Revenus</h3>
-            <p>{{ revenue | currency:'EUR' }}</p>
-          </div>
-        </div>
-        <canvas baseChart
-                [data]="barChartData"
-                [options]="barChartOptions"
-                type="bar">
-        </canvas>
-      </mat-card-content>
-    </mat-card>
+
+  <!-- KPI Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md transform hover:scale-105 transition-transform duration-300">
+      <h2 class="text-lg font-semibold mb-2 text-dark-purple dark:text-gold-200">Véhicules Aujourd'hui</h2>
+      <p class="text-3xl font-bold text-primary-purple dark:text-gold-400">{{ analyticsData?.totalVehicles }}</p>
+    </div>
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md transform hover:scale-105 transition-transform duration-300">
+      <h2 class="text-lg font-semibold mb-2 text-dark-purple dark:text-gold-200">Taux d'Occupation</h2>
+      <p class="text-3xl font-bold text-primary-purple dark:text-gold-400">{{ analyticsData?.occupancyRate }}%</p>
+    </div>
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md transform hover:scale-105 transition-transform duration-300">
+      <h2 class="text-lg font-semibold mb-2 text-dark-purple dark:text-gold-200">Revenu Quotidien</h2>
+      <p class="text-3xl font-bold text-primary-purple dark:text-gold-400">{{ analyticsData?.dailyRevenue }} TND</p>
+    </div>
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md transform hover:scale-105 transition-transform duration-300">
+      <h2 class="text-lg font-semibold mb-2 text-dark-purple dark:text-gold-200">Temps Moyen Stationnement</h2>
+      <p class="text-3xl font-bold text-primary-purple dark:text-gold-400">{{ analyticsData?.averageParkingTime }}h</p>
+    </div>
+  </div>
+
+  <!-- Filter -->
+<div class="flex flex-col sm:flex-row sm:justify-center gap-4 mt-6">
+  <button 
+    (click)="changePeriod('day')" 
+    [ngClass]="{'bg-primary-purple text-white': period === 'day', 'bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-200': period !== 'day'}" 
+    class="flex-1 px-4 py-2 rounded-lg hover:bg-dark-purple transition-all min-w-[100px] text-center"
+  >
+    Jour
+  </button>
+  <button 
+    (click)="changePeriod('week')" 
+    [ngClass]="{'bg-primary-purple text-white': period === 'week', 'bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-200': period !== 'week'}" 
+    class="flex-1 px-4 py-2 rounded-lg hover:bg-dark-purple transition-all min-w-[100px] text-center"
+  >
+    Semaine
+  </button>
+  <button 
+    (click)="changePeriod('month')" 
+    [ngClass]="{'bg-primary-purple text-white': period === 'month', 'bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-200': period !== 'month'}" 
+    class="flex-1 px-4 py-2 rounded-lg hover:bg-dark-purple transition-all min-w-[100px] text-center"
+  >
+    Mois
+  </button>
+  <button 
+    (click)="exportReport()" 
+    class="flex-1 px-4 py-2 rounded-lg bg-primary-purple text-white hover:bg-dark-purple transition-all animate-pulse min-w-[100px] text-center"
+  >
+    Exporter Rapport
+  </button>
+</div>
+  <!-- Charts -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Main Chart -->
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+      <h2 class="text-lg font-semibold mb-4 text-dark-purple dark:text-gold-200">{{ period === 'day' ? 'Tendance Occupation' : 'Revenus' }}</h2>
+      <canvas baseChart [data]="chartData" [options]="chartOptions" [type]="chartType"></canvas>
+    </div>
+    <!-- Pie Chart (Occupancy) -->
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+      <h2 class="text-lg font-semibold mb-4 text-dark-purple dark:text-gold-200">Taux d'Occupation</h2>
+      <canvas baseChart [data]="pieChartData" [options]="pieChartOptions" [type]="'pie'"></canvas>
+    </div>
   </div>

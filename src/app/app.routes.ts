@@ -92,8 +92,30 @@ export const routes: Routes = [
     path: 'app/admin/dashboard',
     loadComponent: () => import('./dashboard-admin/admin-dashboard.component').then(m => m.AdminDashboardComponent),
     canActivate: [AuthGuard],
-    data: { role: 'ROLE_ADMIN' }
+    data: { role: 'ROLE_ADMIN' },
+    children: [
+      { path: '', redirectTo: 'analytics', pathMatch: 'full', data: { hideNavbar: true } },
+      { 
+        path: 'analytics', 
+        loadComponent: () => import('./dashboard-admin/components/analytics/analytics.component')
+          .then(m => m.AnalyticsComponent),
+        data: { hideNavbar: true }
+      },
+      { 
+        path: 'user-management', 
+        loadComponent: () => import('./dashboard-admin/components/user-management/user-management.component')
+          .then(m => m.UserManagementComponent),
+        data: { hideNavbar: true }
+      },
+      { 
+        path: 'parking-settings', 
+        loadComponent: () => import('./dashboard-admin/components/parking-settings/parking-settings.component')
+          .then(m => m.ParkingSettingsComponent),
+        data: { hideNavbar: true }
+      }
+    ]
   },
+  
   {
     path: '**',
     redirectTo: '/home'

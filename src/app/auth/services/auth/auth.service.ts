@@ -1,9 +1,10 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { tap, catchError } from 'rxjs/operators';
 import { isPlatformBrowser } from '@angular/common';
+import { throwError } from 'rxjs';
 
 interface AuthResponse {
   message: string;
@@ -44,7 +45,6 @@ export class AuthService {
   public sidebarOpen$ = this.sidebarOpen.asObservable();
   private userSubject = new BehaviorSubject<User | null>(null);
   public user$ = this.userSubject.asObservable();
-  
   private isSidebarCollapsedSubject = new BehaviorSubject<boolean>(false);
   isSidebarCollapsed$: Observable<boolean> = this.isSidebarCollapsedSubject.asObservable();
 
@@ -85,7 +85,11 @@ export class AuthService {
             this.redirectBasedOnRole(response.roles);
           }
         },
-        error: (err) => console.error('Login error:', err)
+        error: (err: HttpErrorResponse) => console.error('Login error:', err)
+      }),
+      catchError((err: HttpErrorResponse) => {
+        console.error('Login failed:', err);
+        return throwError(() => new Error(err.error?.message || 'Échec de la connexion'));
       })
     );
   }
@@ -112,7 +116,11 @@ export class AuthService {
             this.redirectBasedOnRole(response.roles);
           }
         },
-        error: (err) => console.error('Register error:', err)
+        error: (err: HttpErrorResponse) => console.error('Register error:', err)
+      }),
+      catchError((err: HttpErrorResponse) => {
+        console.error('Register failed:', err);
+        return throwError(() => new Error(err.error?.message || 'Échec de l\'inscription'));
       })
     );
   }
@@ -142,13 +150,14 @@ export class AuthService {
     }
   }
 
-  toggleSidebarCollapse() {
+  toggleSidebarCollapse(): void {
     this.isSidebarCollapsedSubject.next(!this.isSidebarCollapsedSubject.value);
   }
 
   logout(): void {
     if (isPlatformBrowser(this.platformId)) {
-      localStorage.clear();
+      localStorage.removeItem(this.tokenKey);
+      localStorage.removeItem('user');
       this.authStatus.next(false);
       this.userSubject.next(null);
       this.sidebarOpen.next(false);
@@ -197,8 +206,8 @@ export class AuthService {
       const user: User = JSON.parse(userStr);
       user.initials = this.getInitials(user.firstName || '', user.lastName || '');
       return user;
-    } catch (e) {
-      console.error('Error parsing user data:', e);
+    } catch (err) {
+      console.error('Error parsing user data:', err);
       return null;
     }
   }
